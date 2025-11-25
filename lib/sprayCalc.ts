@@ -1,26 +1,18 @@
 // lib/sprayCalc.ts
-import { kFromRef, Nozzle } from "./nozzle"
-import { NOZZLE_PRESETS } from "./nozzleTypes"
-import { Sprayer } from "./sprayer"
-import { AbsoluteBounds, computeIntegerSpeedSolutions, TradeoffInputs } from "./sprayMath"
+import { kFromRef } from "./types/nozzle"
+import { NOZZLE_PRESETS } from "./data/nozzlePresets"
+import { Sprayer } from "./types/sprayer"
+import { AbsoluteBounds, computeSolutions } from "./solver/sprayTradeoffs"
 
 export function calculateSpray() {
-  const qRef = 0.924
-  const pRef = 1
-  const K = kFromRef(qRef, pRef)
-
-  const nozzle = NOZZLE_PRESETS.find(p => p.name === "Syngenta 025 XC");
+  const nozzle = NOZZLE_PRESETS.find(p => p.id === "teejet-aixr11004");
   if (!nozzle) throw new Error("Preset not found");
+
+  const sprayVolumeLHa = 300; // L/ha
 
   const sprayer: Sprayer = {
     nozzleSpacingM: 0.5, // 50 cm spacing
     tankSizeL: 400,
-  }
-
-  const inputs: TradeoffInputs = {
-    targetRateLHa: 250, // want 300 L/ha water volume
-    nozzle,
-    sprayer,
   }
 
   const absolute: AbsoluteBounds = {
@@ -30,7 +22,7 @@ export function calculateSpray() {
     pMax: 4,
   }
 
-  const solutions = computeIntegerSpeedSolutions(inputs, absolute)
+  const solutions = computeSolutions(sprayVolumeLHa, nozzle, sprayer, absolute);
 
-  return { K, solutions, nozzle, sprayer, inputs, absolute }
+  return { nozzle, solutions, sprayVolumeLHa }
 }
