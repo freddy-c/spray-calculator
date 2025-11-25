@@ -5,7 +5,7 @@ import { Sprayer } from "./types/sprayer"
 import { AbsoluteBounds, computeSolutions } from "./solver/sprayTradeoffs"
 
 export function calculateSpray() {
-  const nozzle = NOZZLE_PRESETS.find(p => p.id === "teejet-aixr11004");
+  const nozzle = NOZZLE_PRESETS.find(p => p.id === "teejet-xrc11004");
   if (!nozzle) throw new Error("Preset not found");
 
   const sprayVolumeLHa = 300; // L/ha
@@ -19,10 +19,10 @@ export function calculateSpray() {
     vMin: 3,
     vMax: 8, // we only consider integer speeds 3..8 km/h
     pMin: 1,
-    pMax: 4,
+    pMax: 6,
   }
 
   const solutions = computeSolutions(sprayVolumeLHa, nozzle, sprayer, absolute);
 
-  return { nozzle, solutions, sprayVolumeLHa }
+  return { nozzle, sprayer, absolute, solutions, sprayVolumeLHa }
 }

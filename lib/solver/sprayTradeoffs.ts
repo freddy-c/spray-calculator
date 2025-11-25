@@ -19,18 +19,13 @@ export interface SpraySolution {
     dropletClass?: DropletClass;
 }
 
-export function computeSolutions(
+export function computeSolutionForSpeed(
+    speedKmH: number,
     targetRateLHa: number,
     nozzle: Nozzle,
     sprayer: Sprayer,
     absolute: AbsoluteBounds,
-): SpraySolution[] {
-    const searchVMin = absolute.vMin
-    const searchVMax = absolute.vMax
-
-    const candidates: SpraySolution[] = [];
-
-    // Brand-specific parameters
+): SpraySolution | undefined {
     const hasSyngentaOptimum = nozzle.brand === "syngenta";
     const vOptMin = hasSyngentaOptimum
         ? (nozzle as SyngentaNozzle).optSpeedMinKmH
@@ -45,48 +40,72 @@ export function computeSolutions(
         ? (nozzle as SyngentaNozzle).optPressureMaxBar
         : nozzle.pressureMaxBar;
 
-    for (let v = searchVMin; v <= searchVMax; v++) {
-        const pRaw = pressureForSpeed(
-            v, targetRateLHa,
-            sprayer.nozzleSpacingM,
-            nozzle.kFactor,
-        )
-        const p = Math.round(pRaw * 10) / 10;
-        
-        // discard if pressure is outside absolute bounds
-        if (p < absolute.pMin || p > absolute.pMax) continue;
+    const pRaw = pressureForSpeed(
+        speedKmH,
+        targetRateLHa,
+        sprayer.nozzleSpacingM,
+        nozzle.kFactor,
+    );
+    const p = Math.round(pRaw * 10) / 10;
 
-        // nozzle output at this (rounded) pressure: Q = K * sqrt(P)
-        const qRaw = nozzle.kFactor * Math.sqrt(pRaw);
-        const q = Math.round(qRaw * 1000) / 1000; // L/min, 2 dp
+    // discard if pressure is outside absolute bounds
+    if (p < absolute.pMin || p > absolute.pMax) return undefined;
 
-            const withinRecommendedPressure = p >= nozzle.pressureMinBar && p <= nozzle.pressureMaxBar;
+    // nozzle output at this (rounded) pressure: Q = K * sqrt(P)
+    const qRaw = nozzle.kFactor * Math.sqrt(pRaw);
+    const q = Math.round(qRaw * 1000) / 1000; // L/min, 3 dp
 
+    const withinRecommendedPressure = p >= nozzle.pressureMinBar && p <= nozzle.pressureMaxBar;
 
-        const inOptimum =
-            hasSyngentaOptimum &&
-            v >= vOptMin &&
-            v <= vOptMax &&
-            p >= pOptMin &&
-            p <= pOptMax;
+    const inOptimum =
+        hasSyngentaOptimum &&
+        speedKmH >= vOptMin &&
+        speedKmH <= vOptMax &&
+        p >= pOptMin &&
+        p <= pOptMax;
 
-        let dropletClass: DropletClass | undefined;
-        if (nozzle.brand === "teejet") {
-            dropletClass = getDropletClassForPressure(
+    let dropletClass: DropletClass | undefined;
+    if (nozzle.brand === "teejet") {
+        dropletClass = getDropletClassForPressure(
             nozzle as TeeJetNozzle,
-            p
-            );
-        }
-
-        candidates.push({
-            speedKmH: v,
-            pressureBar: p,
-            nozzleOutputLMin: q,
-            inOptimum: inOptimum,
-            withinRecommendedPressure: withinRecommendedPressure,
-            dropletClass: dropletClass,
-        });
+            p,
+        );
     }
 
-    return candidates
+    return {
+        speedKmH,
+        pressureBar: p,
+        nozzleOutputLMin: q,
+        inOptimum,
+        withinRecommendedPressure,
+        dropletClass,
+    };
+}
+
+export function computeSolutions(
+    targetRateLHa: number,
+    nozzle: Nozzle,
+    sprayer: Sprayer,
+    absolute: AbsoluteBounds,
+): SpraySolution[] {
+    const searchVMin = absolute.vMin;
+    const searchVMax = absolute.vMax;
+
+    const candidates: SpraySolution[] = [];
+
+    for (let v = searchVMin; v <= searchVMax; v++) {
+        const solution = computeSolutionForSpeed(
+            v,
+            targetRateLHa,
+            nozzle,
+            sprayer,
+            absolute,
+        );
+
+        if (solution) {
+            candidates.push(solution);
+        }
+    }
+
+    return candidates;
 }

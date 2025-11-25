@@ -51,5 +51,19 @@ export const NOZZLE_PRESETS: Nozzle[] = [
             { dropletClass: "C", fromBar: 4, toBar: 5 },
             { dropletClass: "M", fromBar: 5, toBar: 6 },
         ]
+    },
+    {
+        brand: "teejet",
+        id: "teejet-xrc11004",
+        pressureMinBar: 1,
+        pressureMaxBar: 4,
+        name: "TeeJet XRC11004",
+        kFactor: kFromRef(0.91, 1),
+        dropletBands: [
+            { dropletClass: "M", fromBar: 1, toBar: 1.5 },
+            { dropletClass: "M", fromBar: 1.5, toBar: 2 },
+            { dropletClass: "M", fromBar: 2, toBar: 3 },
+            { dropletClass: "M", fromBar: 3, toBar: 4 },
+        ]
     }
 ]
