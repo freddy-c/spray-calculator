@@ -69,21 +69,20 @@ const formSchema = z.object({
 function calculateSprayMetrics(values: z.infer<typeof formSchema>) {
   const sprayVolume = values.sprayVolumeLHa;
   const nozzleSpacing = values.nozzleSpacingM;
-  const speed = values.speedKmH;
+  const speedKmH = values.speedKmH;
   const tankSize = values.tankSizeL;
 
   const nozzle = nozzleCatalog[values.nozzleId];
 
-  const flowPerNozzleLMin = (sprayVolume * speed * nozzleSpacing) / 600;
+  const flowPerNozzleLMin = (sprayVolume * speedKmH * nozzleSpacing) / 600;
   const tankCoverageHa = tankSize / sprayVolume;
 
-  const requiredPressureBar = Math.pow(sprayVolume * speed * nozzleSpacing / (600 * nozzle.kFactor), 2);
+  const requiredPressureBar = Math.pow(sprayVolume * speedKmH * nozzleSpacing / (600 * nozzle.kFactor), 2);
 
   return {
     flowPerNozzleLMin,
     requiredPressureBar,
-    tankCoverageHa,
-    speedKmH: speed,
+    speedKmH,
   };
 }
 
@@ -253,13 +252,13 @@ export default function Home() {
             </div>
           </form>
         </CardContent>
-        <CardFooter>
+        {/* <CardFooter>
         <Field orientation="horizontal">
           <Button type="submit" form="form">
             Submit
           </Button>
         </Field>
-      </CardFooter>
+      </CardFooter> */}
       </Card>
     </div>
   );
