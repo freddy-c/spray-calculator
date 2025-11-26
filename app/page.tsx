@@ -230,7 +230,6 @@ export default function Home() {
                       aria-invalid={fieldState.invalid}
                       placeholder="0.5"
                       step={0.1}
-                      // className="sm:max-w-[8rem]"
                       {...field}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -254,7 +253,6 @@ export default function Home() {
                       aria-invalid={fieldState.invalid}
                       placeholder="400"
                       step={10}
-                      // className="sm:max-w-[8rem]"
                       {...field}
                     />
                     {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
@@ -291,9 +289,6 @@ export default function Home() {
               </FieldSeparator> 
             </FieldGroup>
 
-            {/* <FieldSeparator>
-              Live metrics
-            </FieldSeparator> */}
             
 
             <div className="mt-4 space-y-4">
