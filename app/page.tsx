@@ -16,6 +16,8 @@ type NozzleSpec = {
   label: string;
   brand: string;
   kFactor: number;
+  minPressureBar: number;
+  maxPressureBar: number;
 };
 
 const nozzleCatalog: Record<string, NozzleSpec> = {
@@ -24,30 +26,40 @@ const nozzleCatalog: Record<string, NozzleSpec> = {
     label: "Syngenta 025 XC",
     brand: "syngenta",
     kFactor: 0.577,
+    minPressureBar: 1,
+    maxPressureBar: 4,
   },
   "syngenta-04-xc": {
     id: "syngenta-04-xc",
     label: "Syngenta 04 XC",
     brand: "syngenta",
     kFactor: 0.924,
+    minPressureBar: 1,
+    maxPressureBar: 4,
   },
   "syngenta-08-xc": {
     id: "syngenta-08-xc",
     label: "Syngenta 08 XC",
     brand: "syngenta",
     kFactor: 1.848,
+    minPressureBar: 1,
+    maxPressureBar: 4,
   },
   "teejet-aixr11004": {
     id: "teejet-aixr11004",
     label: "TeeJet AIXR11004",
     brand: "teejet",
     kFactor: 0.91,
+    minPressureBar: 1,
+    maxPressureBar: 6,
   },
   "teejet-xrc11004": {
     id: "teejet-xrc11004",
     label: "TeeJet XRC11004",
     brand: "teejet",
     kFactor: 0.91,
+    minPressureBar: 1,
+    maxPressureBar: 6,
   },
 };
 
@@ -65,8 +77,17 @@ const formSchema = z.object({
     .lte(12, `Max 12 km/h`),
 })
 
+type PressureStatus = "ok" | "low" | "high" | "unknown";
 
-function calculateSprayMetrics(values: z.infer<typeof formSchema>) {
+type SprayMetrics = {
+  flowPerNozzleLMin: number;
+  requiredPressureBar: number;
+  speedKmH: number;
+  pressureStatus: PressureStatus;
+  pressureRange: { min: number; max: number } | null;
+};
+
+function calculateSprayMetrics(values: z.infer<typeof formSchema>): SprayMetrics {
   const sprayVolume = values.sprayVolumeLHa;
   const nozzleSpacing = values.nozzleSpacingM;
   const speedKmH = values.speedKmH;
@@ -75,14 +96,24 @@ function calculateSprayMetrics(values: z.infer<typeof formSchema>) {
   const nozzle = nozzleCatalog[values.nozzleId];
 
   const flowPerNozzleLMin = (sprayVolume * speedKmH * nozzleSpacing) / 600;
-  const tankCoverageHa = tankSize / sprayVolume;
-
   const requiredPressureBar = Math.pow(sprayVolume * speedKmH * nozzleSpacing / (600 * nozzle.kFactor), 2);
+  const pressureRange = {
+    min: nozzle.minPressureBar,
+    max: nozzle.maxPressureBar,
+  };
+  const pressureStatus: PressureStatus =
+    requiredPressureBar < nozzle.minPressureBar
+      ? "low"
+      : requiredPressureBar > nozzle.maxPressureBar
+        ? "high"
+        : "ok";
 
   return {
     flowPerNozzleLMin,
     requiredPressureBar,
     speedKmH,
+    pressureStatus,
+    pressureRange,
   };
 }
 
@@ -100,7 +131,7 @@ export default function Home() {
   })
 
   const watchedValues = form.watch();
-  
+
   const metrics = useMemo(() => {
     const parsed = formSchema.safeParse(watchedValues);
     if (!parsed.success) {
@@ -242,13 +273,24 @@ export default function Home() {
                 </div>
                 <div className="rounded-md border p-3">
                   <p className="text-sm text-muted-foreground">Pressure</p>
-                  <p className="text-xl font-semibold">{metrics ? metrics.requiredPressureBar.toFixed(2) : "—"} bar</p>
+                  <p className={`text-xl font-semibold ${metrics?.pressureStatus === "ok" ? "text-emerald-700" : "text-destructive" }`}>
+                    {metrics ? metrics.requiredPressureBar.toFixed(2) : "—"} bar
+                  </p>
                 </div>
                 <div className="rounded-md border p-3">
                   <p className="text-sm text-muted-foreground">Speed</p>
                   <p className="text-xl font-semibold">{metrics ? metrics.speedKmH.toFixed(2) : "—"} km/h</p>
                 </div>
               </div>
+              { metrics?.pressureStatus !== "ok" && (
+                <div className="rounded-md border p-3 border-destructive/30 bg-destructive/5">
+                  <p className="text-sm text-amber-700 text-destructive">
+                    {metrics?.pressureStatus === "low" && "Pressure is below the recommended range — consider increasing speed or increasing spray volume."}
+                    {metrics?.pressureStatus === "high" && "Pressure is above the recommended range — consider reducing speed or reducing spray volume."}
+                    {!metrics && "Enter values to see pressure guidance."}
+                  </p>
+                </div>
+              )}
             </div>
           </form>
         </CardContent>
