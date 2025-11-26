@@ -1,6 +1,6 @@
 import styles from '../styles/home.module.css'
 
-import { useMemo, useEffect } from "react"
+import { useMemo } from "react"
 import { useForm, Controller } from "react-hook-form"
 import { z } from "zod"
 import { zodResolver } from "@hookform/resolvers/zod"
@@ -16,27 +16,24 @@ function SprayResults() {
 
   const formSchema = useMemo(() => z.object({
     nozzleId: z.string().min(1, "Select a nozzle"),
-    sprayVolumeLHa: z.string()
-      .min(1, "Spray volume is required")
-      .refine(
-        (val) => {
-          const num = Number(val);
-          return !Number.isNaN(num) && num > 0;
-        },
-        { message: "Enter a spray volume greater than 0" },
-      ),
-    speedKmH: z.preprocess(
-      (val) => val === "" ? undefined : val,
-      z.coerce.number()
-        .min(DEFAULT_ABSOLUTE_BOUNDS.vMin, `Min ${DEFAULT_ABSOLUTE_BOUNDS.vMin} km/h`)
-        .max(DEFAULT_ABSOLUTE_BOUNDS.vMax, `Max ${DEFAULT_ABSOLUTE_BOUNDS.vMax} km/h`),
-    ),
+    sprayVolumeLHa: z.coerce.number()
+      .positive("Spray volume must be greater than 0"),
+    nozzleSpacingM: z.coerce.number()
+      .positive("Nozzle spacing must be greater than 0")
+      .lt(10, "Nozzle spacing must be less than 10m"),
+    tankSizeL: z.coerce.number()
+      .positive("Tank size must be greater than 0"),
+    speedKmH: z.coerce.number()
+      .gte(DEFAULT_ABSOLUTE_BOUNDS.vMin, `Min ${DEFAULT_ABSOLUTE_BOUNDS.vMin} km/h`)
+      .lte(DEFAULT_ABSOLUTE_BOUNDS.vMax, `Max ${DEFAULT_ABSOLUTE_BOUNDS.vMax} km/h`),
   }), []);
 
-  const { control, watch, setValue, formState: { errors } } = useForm({
+  const { control, watch, formState: { errors, isValid } } = useForm({
     defaultValues: {
       nozzleId: defaultNozzleId,
-      sprayVolumeLHa: "300",
+      sprayVolumeLHa: 300,
+      nozzleSpacingM: DEFAULT_SPRAYER.nozzleSpacingM,
+      tankSizeL: DEFAULT_SPRAYER.tankSizeL,
       speedKmH: 5,
     },
     resolver: zodResolver(formSchema),
@@ -46,27 +43,36 @@ function SprayResults() {
 
   const formValues = watch();
 
-  const scenario = useMemo(
-    () => {
-      if (errors.speedKmH || errors.sprayVolumeLHa) return undefined;
-      if (!formValues.nozzleId || !formValues.sprayVolumeLHa) return undefined;
-      const sprayVolume = Number(formValues.sprayVolumeLHa);
-      if (Number.isNaN(sprayVolume) || sprayVolume <= 0) return undefined;
-      const speedVal = typeof formValues.speedKmH === "number"
-        ? formValues.speedKmH
-        : Number(formValues.speedKmH);
-      if (Number.isNaN(speedVal)) return undefined;
+  const scenario = useMemo(() => {
+    // Only build when the form is valid
+    if (!isValid) return undefined;
 
-      return buildSprayScenario({
-        nozzleId: formValues.nozzleId,
-        sprayVolumeLHa: sprayVolume,
-        speedKmH: speedVal,
-        sprayer: DEFAULT_SPRAYER,
-        absolute: DEFAULT_ABSOLUTE_BOUNDS,
-      });
-    },
-    [formValues.nozzleId, formValues.sprayVolumeLHa, formValues.speedKmH, errors.speedKmH, errors.sprayVolumeLHa],
-  );
+    const {
+      nozzleId,
+      sprayVolumeLHa,
+      nozzleSpacingM,
+      tankSizeL,
+      speedKmH,
+    } = formValues;
+
+    return buildSprayScenario({
+      nozzleId,
+      sprayVolumeLHa,
+      speedKmH,
+      sprayer: {
+        nozzleSpacingM,
+        tankSizeL,
+      },
+      absolute: DEFAULT_ABSOLUTE_BOUNDS,
+    });
+  }, [
+    isValid,
+    formValues.nozzleId,
+    formValues.sprayVolumeLHa,
+    formValues.nozzleSpacingM,
+    formValues.tankSizeL,
+    formValues.speedKmH,
+  ]);
 
   const isSyngenta = scenario?.nozzle.brand === "syngenta";
   const isTeeJet = scenario?.nozzle.brand === "teejet";
@@ -139,6 +145,46 @@ function SprayResults() {
         </label>
 
         <label style={{ display: "grid", gap: 6 }}>
+          <span>Nozzle spacing (m)</span>
+          <Controller
+            control={control}
+            name="nozzleSpacingM"
+            render={({ field }) => (
+              <input
+                type="number"
+                min="0"
+                step="0.01"
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+              />
+            )}
+          />
+          {errors.nozzleSpacingM && (
+            <span style={{ color: "red", fontSize: 12 }}>{errors.nozzleSpacingM.message}</span>
+          )}
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
+          <span>Tank size (L)</span>
+          <Controller
+            control={control}
+            name="tankSizeL"
+            render={({ field }) => (
+              <input
+                type="number"
+                min="0"
+                step="10"
+                value={field.value}
+                onChange={(e) => field.onChange(e.target.value)}
+              />
+            )}
+          />
+          {errors.tankSizeL && (
+            <span style={{ color: "red", fontSize: 12 }}>{errors.tankSizeL.message}</span>
+          )}
+        </label>
+
+        <label style={{ display: "grid", gap: 6 }}>
           <span>Forward speed (km/h)</span>
           <Controller
             control={control}
@@ -150,8 +196,8 @@ function SprayResults() {
                   min={(scenario?.absolute ?? DEFAULT_ABSOLUTE_BOUNDS).vMin}
                   max={(scenario?.absolute ?? DEFAULT_ABSOLUTE_BOUNDS).vMax}
                   step="0.1"
-                  value={field.value === "" ? (scenario?.absolute ?? DEFAULT_ABSOLUTE_BOUNDS).vMin : field.value}
-                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
                   style={{ flex: 1 }}
                 />
                 <input
@@ -160,7 +206,7 @@ function SprayResults() {
                   max={(scenario?.absolute ?? DEFAULT_ABSOLUTE_BOUNDS).vMax}
                   step="0.1"
                   value={field.value}
-                  onChange={(e) => field.onChange(e.target.value === "" ? "" : Number(e.target.value))}
+                  onChange={(e) => field.onChange(e.target.value)}
                   style={{ width: 90 }}
                 />
               </div>
@@ -223,41 +269,6 @@ function SprayResults() {
               </p>
             )}
           </div>
-
-          {/* <table>
-            <thead>
-              <tr>
-                <th>Speed (km/h)</th>
-                <th>Pressure (bar)</th>
-                <th>Nozzle Output (L/min)</th>
-                {isTeeJet && <th>Droplet class</th>}
-                <th>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {scenario.solutions.map((s) => {
-                const { emoji, text } = statusFor(s);
-
-                return (
-                  <tr key={s.speedKmH}>
-                    <td>{s.speedKmH}</td>
-                    <td>{s.pressureBar.toFixed(1)}</td>
-                    <td>{s.nozzleOutputLMin.toFixed(3)}</td>
-                    {isTeeJet && (
-                      <td>
-                        {s.dropletClass
-                          ? s.dropletClass
-                          : <span style={{ color: "#999" }}>n/a</span>}
-                      </td>
-                    )}
-                    <td>
-                      {emoji} {text}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table> */}
         </>
       )}
     </section>
