@@ -1,14 +1,55 @@
 "use client";
 
+import { useMemo } from "react";
 import * as z from "zod";
 import { Controller, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+
+type NozzleSpec = {
+  id: string;
+  label: string;
+  brand: string;
+  kFactor: number;
+};
+
+const nozzleCatalog: Record<string, NozzleSpec> = {
+  "syngenta-025-xc": {
+    id: "syngenta-025-xc",
+    label: "Syngenta 025 XC",
+    brand: "syngenta",
+    kFactor: 0.577,
+  },
+  "syngenta-04-xc": {
+    id: "syngenta-04-xc",
+    label: "Syngenta 04 XC",
+    brand: "syngenta",
+    kFactor: 0.924,
+  },
+  "syngenta-08-xc": {
+    id: "syngenta-08-xc",
+    label: "Syngenta 08 XC",
+    brand: "syngenta",
+    kFactor: 1.848,
+  },
+  "teejet-aixr11004": {
+    id: "teejet-aixr11004",
+    label: "TeeJet AIXR11004",
+    brand: "teejet",
+    kFactor: 0.91,
+  },
+  "teejet-xrc11004": {
+    id: "teejet-xrc11004",
+    label: "TeeJet XRC11004",
+    brand: "teejet",
+    kFactor: 0.91,
+  },
+};
 
 const formSchema = z.object({
   nozzleId: z.string().min(1, "Select a nozzle"),
@@ -24,6 +65,28 @@ const formSchema = z.object({
     .lte(12, `Max 12 km/h`),
 })
 
+
+function calculateSprayMetrics(values: z.infer<typeof formSchema>) {
+  const sprayVolume = values.sprayVolumeLHa;
+  const nozzleSpacing = values.nozzleSpacingM;
+  const speed = values.speedKmH;
+  const tankSize = values.tankSizeL;
+
+  const nozzle = nozzleCatalog[values.nozzleId];
+
+  const flowPerNozzleLMin = (sprayVolume * speed * nozzleSpacing) / 600;
+  const tankCoverageHa = tankSize / sprayVolume;
+
+  const requiredPressureBar = Math.pow(sprayVolume * speed * nozzleSpacing / (600 * nozzle.kFactor), 2);
+
+  return {
+    flowPerNozzleLMin,
+    requiredPressureBar,
+    tankCoverageHa,
+    speedKmH: speed,
+  };
+}
+
 export default function Home() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -36,6 +99,17 @@ export default function Home() {
     },
     mode: "onChange",
   })
+
+  const watchedValues = form.watch();
+  
+  const metrics = useMemo(() => {
+    const parsed = formSchema.safeParse(watchedValues);
+    if (!parsed.success) {
+      return null;
+    }
+
+    return calculateSprayMetrics(parsed.data);
+  }, [watchedValues]);
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     console.log(data);
@@ -68,8 +142,11 @@ export default function Home() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectGroup>
-                        <SelectItem key={"syngenta-025-xc"} value="syngenta-025-xc">Syngenta 025 XC</SelectItem>
-                        <SelectItem key={"syngenta-04-xc"} value="syngenta-04-xc">Syngenta 04 XC</SelectItem>
+                        {Object.values(nozzleCatalog).map((nozzle) => (
+                          <SelectItem key={nozzle.id} value={nozzle.id}>
+                            {nozzle.label}
+                          </SelectItem>
+                        ))}
                       </SelectGroup>
                     </SelectContent>
                   </Select>
@@ -85,12 +162,12 @@ export default function Home() {
                     Spray volume (L/ha)
                   </FieldLabel>
                   <Input
-                    {...field}
+                    id="sprayVolumeLHa"
                     type="number"
                     inputMode="numeric"
-                    id="sprayVolumeLHa"
                     aria-invalid={fieldState.invalid}
                     placeholder="Spray volume"
+                    {...field}    
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -104,12 +181,13 @@ export default function Home() {
                     Nozzle spacing (m)
                   </FieldLabel>
                   <Input
-                    {...field}
+                    id="nozzleSpacingM"
                     type="number"
                     inputMode="numeric"
-                    id="nozzleSpacingM"
                     aria-invalid={fieldState.invalid}
                     placeholder="Nozzle spacing"
+                    step={0.1}
+                    {...field}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -123,12 +201,13 @@ export default function Home() {
                     Tank size (L)
                   </FieldLabel>
                   <Input
-                    {...field}
+                    id="tankSizeL"
                     type="number"
                     inputMode="numeric"
-                    id="tankSizeL"
                     aria-invalid={fieldState.invalid}
                     placeholder="Tank size"
+                    step={10}
+                    {...field}
                   />
                   {fieldState.invalid && (
                     <FieldError errors={[fieldState.error]} />
@@ -154,6 +233,24 @@ export default function Home() {
                 </Field>
               )} />
             </FieldGroup>
+
+            <div className="mt-6 space-y-4">
+              <FieldDescription>Live calculations update as you change any input.</FieldDescription>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <div className="rounded-md border p-3">
+                  <p className="text-sm text-muted-foreground">Nozzle flow</p>
+                  <p className="text-xl font-semibold">{metrics ? metrics.flowPerNozzleLMin.toFixed(2) : "—"} L/min</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-sm text-muted-foreground">Pressure</p>
+                  <p className="text-xl font-semibold">{metrics ? metrics.requiredPressureBar.toFixed(2) : "—"} bar</p>
+                </div>
+                <div className="rounded-md border p-3">
+                  <p className="text-sm text-muted-foreground">Speed</p>
+                  <p className="text-xl font-semibold">{metrics ? metrics.speedKmH.toFixed(2) : "—"} km/h</p>
+                </div>
+              </div>
+            </div>
           </form>
         </CardContent>
         <CardFooter>
