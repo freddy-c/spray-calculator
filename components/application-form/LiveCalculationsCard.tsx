@@ -1,0 +1,126 @@
+import type { SprayMetrics } from "@/lib/application";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+type LiveCalculationsCardProps = {
+  metrics: SprayMetrics | null;
+  sprayVolumeLHa: number;
+};
+
+export function LiveCalculationsCard({ metrics, sprayVolumeLHa }: LiveCalculationsCardProps) {
+  return (
+    <Card>
+      <CardHeader className="border-b">
+        <CardTitle>Live calculations</CardTitle>
+        <CardDescription>
+          Values update as you adjust any setting.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        {/* First row: nozzle & pressure */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">
+                  Nozzle flow
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>The nozzle output for one nozzle</p>
+              </TooltipContent>
+            </Tooltip>
+            <p className="text-xl font-semibold">
+              {metrics ? metrics.flowPerNozzleLMin.toFixed(2) : "—"} L/min
+            </p>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">
+                  Pressure
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>The pressure at the nozzle</p>
+              </TooltipContent>
+            </Tooltip>
+            <p
+              className={`text-xl font-semibold ${metrics?.pressureStatus === "ok"
+                ? "text-emerald-700"
+                : "text-destructive"
+                }`}
+            >
+              {metrics ? metrics.requiredPressureBar.toFixed(2) : "—"} bar
+            </p>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <p className="text-sm text-muted-foreground">Speed</p>
+            <p className="text-xl font-semibold">
+              {metrics ? metrics.speedKmH.toFixed(2) : "—"} km/h
+            </p>
+          </div>
+        </div>
+
+        {/* Second row: area & tanks */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">Total area</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Sum of all areas receiving this application.</p>
+              </TooltipContent>
+            </Tooltip>
+            <p className="text-xl font-semibold">
+              {metrics ? metrics.totalAreaHa.toFixed(3) : "—"} ha
+            </p>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">Spray volume</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Total liquid required at {sprayVolumeLHa} L/ha.</p>
+              </TooltipContent>
+            </Tooltip>
+            <p className="text-xl font-semibold">
+              {metrics ? metrics.totalSprayVolumeL.toFixed(0) : "—"} L
+            </p>
+          </div>
+
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">Tanks required</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Number of full tanks to cover the total area.</p>
+              </TooltipContent>
+            </Tooltip>
+            <p className="text-xl font-semibold">
+              {metrics ? metrics.tanksRequired : "—"}
+            </p>
+          </div>
+        </div>
+
+        {metrics?.pressureStatus !== "ok" && (
+          <div className="rounded-md border border-destructive/30 bg-destructive/5 p-3">
+            <p className="text-sm text-destructive">
+              {metrics?.pressureStatus === "low" &&
+                "Pressure is below the recommended range — consider increasing speed or increasing spray volume."}
+              {metrics?.pressureStatus === "high" &&
+                "Pressure is above the recommended range — consider reducing speed or reducing spray volume."}
+              {!metrics && "Enter values to see pressure guidance."}
+            </p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
