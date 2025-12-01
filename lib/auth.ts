@@ -20,7 +20,7 @@ export const auth = betterAuth({
     requireEmailVerification: true,
     sendResetPassword: async ({ user, url }) => {
       try {
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
           from: 'Acme <onboarding@resend.dev>', // Replace with your verified domain
           to: user.email,
           subject: 'Reset your password',
@@ -45,7 +45,7 @@ export const auth = betterAuth({
   emailVerification: {
     sendVerificationEmail: async ({ user, url }: { user: { email: string; name: string }; url: string }) => {
       try {
-        const { data, error } = await resend.emails.send({
+        const { error } = await resend.emails.send({
           from: 'Acme <onboarding@resend.dev>', // Replace with your verified domain
           to: user.email,
           subject: 'Verify your email address',

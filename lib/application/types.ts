@@ -15,6 +15,7 @@ export type Area = {
 };
 
 export type FormValues = {
+  name: string;
   nozzleId: string;
   sprayVolumeLHa: number;
   nozzleSpacingM: number;

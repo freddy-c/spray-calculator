@@ -29,7 +29,7 @@ export default function DeleteAccountPage() {
         await signOut()
         router.push("/sign-in?deleted=true")
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)

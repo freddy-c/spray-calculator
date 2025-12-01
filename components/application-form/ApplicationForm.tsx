@@ -11,9 +11,22 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { AreaFieldArray } from "./AreaFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
+import type { FormValues } from "@/lib/application/types";
 
-export function ApplicationForm() {
-  const { form, control, areaFields, appendArea, removeArea, metrics, onSubmit } = useApplicationForm();
+type ApplicationFormProps = {
+  mode?: "create" | "edit";
+  initialValues?: Partial<FormValues>;
+  applicationId?: string;
+  onSuccess?: () => void;
+};
+
+export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess }: ApplicationFormProps) {
+  const { form, control, areaFields, appendArea, removeArea, metrics, isSubmitting, onSubmit } = useApplicationForm({
+    mode,
+    initialValues,
+    applicationId,
+    onSuccess,
+  });
 
   const watchedSprayVolume = form.watch("sprayVolumeLHa");
 
@@ -22,7 +35,7 @@ export function ApplicationForm() {
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)] items-start">
         <Card className="w-full">
           <CardHeader className="border-b">
-            <CardTitle>Spray Calculator</CardTitle>
+            <CardTitle>{mode === "edit" ? "Edit Application" : "New Application"}</CardTitle>
             <CardDescription>
               Tune your spray settings and see pressure and flow update instantly.
             </CardDescription>
@@ -30,6 +43,30 @@ export function ApplicationForm() {
           <CardContent>
             <form id="spray-calculator-form" onSubmit={onSubmit}>
               <FieldGroup>
+                {/* Application Name */}
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="input-name">
+                        Application name
+                      </FieldLabel>
+                      <FieldDescription>Give this application a descriptive name.</FieldDescription>
+                      <Input
+                        id="input-name"
+                        type="text"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="e.g., Spring Greens Treatment"
+                        {...field}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <FieldSeparator>Areas</FieldSeparator>
+
                 <AreaFieldArray
                   control={control}
                   fields={areaFields}
@@ -174,10 +211,10 @@ export function ApplicationForm() {
           </CardContent>
           <CardFooter className="border-t">
             <Field orientation="horizontal">
-              <Button type="submit" form="spray-calculator-form">
-                Save settings
+              <Button type="submit" form="spray-calculator-form" disabled={isSubmitting}>
+                {isSubmitting ? "Saving..." : "Save Application"}
               </Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
+              <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSubmitting}>
                 Reset
               </Button>
             </Field>

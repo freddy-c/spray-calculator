@@ -6,23 +6,17 @@ import {
 } from "@/components/auth/reset-password-form"
 import { resetPassword } from "@/lib/auth-client"
 import { useRouter, useSearchParams } from "next/navigation"
-import { useState, useEffect } from "react"
+import { useState, Suspense } from "react"
 
-export default function ResetPasswordPage() {
+function ResetPasswordContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const [token, setToken] = useState<string | null>(null)
 
-  useEffect(() => {
-    const tokenParam = searchParams.get("token")
-    if (!tokenParam) {
-      setError("Invalid or missing reset token. Please request a new password reset link.")
-    } else {
-      setToken(tokenParam)
-    }
-  }, [searchParams])
+  // Derive token directly from URL params
+  const token = searchParams.get("token")
+  const tokenError = !token ? "Invalid or missing reset token. Please request a new password reset link." : null
 
   const handleSubmit = async (data: ResetPasswordFormValues) => {
     if (!token) {
@@ -45,7 +39,7 @@ export default function ResetPasswordPage() {
         // Successfully reset password, redirect to sign in
         router.push("/sign-in?reset=success")
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)
@@ -55,9 +49,9 @@ export default function ResetPasswordPage() {
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
       <div className="w-full max-w-sm">
-        {!token && error ? (
+        {tokenError ? (
           <div className="rounded-md bg-red-50 border border-red-200 p-4 text-sm text-red-800">
-            {error}
+            {tokenError}
           </div>
         ) : (
           <ResetPasswordForm
@@ -68,5 +62,21 @@ export default function ResetPasswordPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <div className="rounded-md bg-gray-50 border border-gray-200 p-4 text-sm text-gray-800">
+            Loading...
+          </div>
+        </div>
+      </div>
+    }>
+      <ResetPasswordContent />
+    </Suspense>
   )
 }

@@ -1,36 +1,101 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Spray Application Calculator
+
+A full-stack web application designed for golf course greenskeepers to calculate and manage spray equipment settings and application tracking. Plan spray applications with real-time calculations for nozzle pressure, flow rates, and coverage areas.
+
+## Features
+
+- **Real-time Spray Calculations**: Automatically calculate flow rates, required pressure, tank requirements, and coverage based on equipment settings
+- **Multi-Area Planning**: Configure applications across different golf course areas (greens, tees, fairways, rough)
+- **Nozzle Catalog**: Select from a catalog of spray nozzles with accurate pressure curve data
+- **Application History**: Save and manage spray application records with user authentication
+- **Live Feedback**: Interactive sliders and forms provide instant validation and metric updates
+
+## Tech Stack
+
+- **Frontend:** React 19, Next.js 16 (App Router), TypeScript
+- **Styling:** Tailwind CSS, shadcn/ui, Radix UI
+- **Forms & Validation:** React Hook Form, Zod schemas
+- **Database:** PostgreSQL, Prisma ORM
+- **Authentication:** Better Auth
+- **Email:** Resend, React Email
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 20+
+- PostgreSQL database
+- npm or yarn
+
+### Installation
+
+1. Clone the repository and install dependencies:
+
+```bash
+npm install
+```
+
+2. Set up your environment variables:
+
+```bash
+cp .env.example .env
+```
+
+Configure the following in `.env`:
+- `DATABASE_URL`: PostgreSQL connection string
+- `BETTER_AUTH_SECRET`: Secret key for authentication
+- Additional auth and email configuration as needed
+
+3. Set up the database:
+
+```bash
+npx prisma migrate dev
+npx prisma generate
+```
+
+4. Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+5. Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Project Structure
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```
+app/
+├── applications/       # Application create/edit pages
+├── dashboard/          # User dashboard and application list
+└── generated/          # Prisma client output
+components/
+├── application-form/   # Main form components
+└── ui/                 # shadcn/ui components
+lib/
+├── actions/            # Server actions
+├── application/        # Types and schemas
+└── data/               # Nozzle catalog data
+prisma/
+└── schema.prisma       # Database schema
+```
 
-## Learn More
+## Database Setup
 
-To learn more about Next.js, take a look at the following resources:
+The application uses Prisma with PostgreSQL. Key models:
+- `User`: User accounts and authentication
+- `Application`: Spray application records
+- `ApplicationArea`: Individual treatment areas within applications
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Run migrations with:
+```bash
+npx prisma migrate dev
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Development
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```bash
+npm run dev          # Start development server
+npm run build        # Build for production
+npm run start        # Start production server
+npm run lint         # Run ESLint
+```

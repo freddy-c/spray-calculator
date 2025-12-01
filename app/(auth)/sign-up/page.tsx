@@ -28,7 +28,7 @@ export default function SignUpPage() {
         // Redirect to check email page since email verification is required
         router.push(`/check-email?email=${encodeURIComponent(data.email)}`)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred. Please try again.")
     } finally {
       setIsLoading(false)
