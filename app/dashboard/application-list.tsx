@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { deleteApplication } from "@/lib/actions/application";
 import { toast } from "sonner";
@@ -25,13 +26,14 @@ type Application = {
 };
 
 type ApplicationListProps = {
-  initialApplications: Application[];
+  applications: Application[];
 };
 
-export function ApplicationList({ initialApplications }: ApplicationListProps) {
-  const [applications, setApplications] = useState(initialApplications);
+export function ApplicationList({ applications }: ApplicationListProps) {
   const [applicationToDelete, setApplicationToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const router = useRouter();
 
   const handleDeleteClick = (id: string) => {
     setApplicationToDelete(id);
@@ -40,19 +42,32 @@ export function ApplicationList({ initialApplications }: ApplicationListProps) {
   const handleDeleteConfirm = async () => {
     if (!applicationToDelete) return;
 
-    setIsDeleting(true);
+    // Capture the id so we’re not relying on state after await
+    const id = applicationToDelete;
 
-    const result = await deleteApplication(applicationToDelete);
+    try {
+      setIsDeleting(true);
 
-    if (result.success) {
-      setApplications((prev) => prev.filter((app) => app.id !== applicationToDelete));
-      toast.success("Application deleted successfully");
-    } else {
-      toast.error(result.error || "Failed to delete application");
+      const result = await deleteApplication(id);
+
+      if (result.success) {
+        // setApplications((prev) => prev.filter((app) => app.id !== id));
+        toast.success("Application deleted successfully");
+
+        // Close the dialog
+        setApplicationToDelete(null);
+
+        router.refresh();
+      } else {
+        toast.error(result.error || "Failed to delete application");
+        // Optionally keep dialog open here so user can retry
+      }
+    } catch (error) {
+      console.error(error);
+      toast.error("Failed to delete application");
+    } finally {
+      setIsDeleting(false);
     }
-
-    setIsDeleting(false);
-    setApplicationToDelete(null);
   };
 
   const formatDate = (date: Date) => {
@@ -110,7 +125,14 @@ export function ApplicationList({ initialApplications }: ApplicationListProps) {
         </table>
       </div>
 
-      <AlertDialog open={applicationToDelete !== null} onOpenChange={(open) => !open && setApplicationToDelete(null)}>
+      <AlertDialog
+        open={applicationToDelete !== null}
+        onOpenChange={(open) => {
+          if (!open && !isDeleting) {
+            setApplicationToDelete(null);
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Application</AlertDialogTitle>
@@ -121,9 +143,11 @@ export function ApplicationList({ initialApplications }: ApplicationListProps) {
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
-              onClick={handleDeleteConfirm}
+              onClick={(e) => {
+                e.preventDefault(); // prevent Radix from auto-closing
+                void handleDeleteConfirm();
+              }}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isDeleting ? "Deleting..." : "Delete"}
             </AlertDialogAction>

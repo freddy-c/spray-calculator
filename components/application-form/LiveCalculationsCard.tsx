@@ -7,11 +7,10 @@ type LiveCalculationsCardProps = {
   metrics: SprayMetrics | null;
   sprayVolumeLHa: number;
   isSubmitting?: boolean;
-  onSave?: () => void;
   onReset?: () => void;
 };
 
-export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, onSave, onReset }: LiveCalculationsCardProps) {
+export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, onReset }: LiveCalculationsCardProps) {
   return (
     <Card>
       <CardHeader className="border-b">

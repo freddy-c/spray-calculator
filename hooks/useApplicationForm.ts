@@ -89,12 +89,7 @@ export function useApplicationForm(props?: UseApplicationFormProps) {
           toast.success("Application saved successfully");
           onSuccess?.();
         } else {
-          if (result.error === "Unauthorized") {
-            toast.error("Please sign in to save applications");
-            router.push("/sign-in?callbackUrl=" + encodeURIComponent(window.location.pathname));
-          } else {
             toast.error(result.error);
-          }
         }
       }
     } catch (error) {

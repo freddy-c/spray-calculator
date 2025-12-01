@@ -45,7 +45,7 @@ export default async function DashboardPage() {
                     </Link>
                 </div>
             ) : (
-                <ApplicationList initialApplications={applications} />
+                <ApplicationList applications={applications} />
             )}
 
             <div className="mt-8 pt-8 border-t">

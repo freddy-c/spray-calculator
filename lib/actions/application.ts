@@ -6,6 +6,7 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { formSchema } from "@/lib/application/schemas";
 import type { FormValues, AreaType } from "@/lib/application/types";
+import { isCuid } from '@paralleldrive/cuid2';
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -64,7 +65,11 @@ export async function createApplication(
     // Validate input
     const validationResult = formSchema.safeParse(data);
     if (!validationResult.success) {
-      return { success: false, error: "Invalid form data" };
+      const errors = validationResult.error.issues
+        .map((issue) => issue.message)
+        .join(', ');
+
+      return { success: false, error: `Invalid form data: ${errors}` };
     }
 
     const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas } = validationResult.data;
@@ -148,6 +153,10 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
 export async function getApplication(
   id: string
 ): Promise<ActionResult<ApplicationWithAreas>> {
+  if (isCuid(id) === false) {
+    return { success: false, error: "Invalid application ID" };
+  }
+  
   try {
     const session = await getSession();
     if (!session) {
