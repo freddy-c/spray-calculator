@@ -1,13 +1,17 @@
 import type { SprayMetrics } from "@/lib/application";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 type LiveCalculationsCardProps = {
   metrics: SprayMetrics | null;
   sprayVolumeLHa: number;
+  isSubmitting?: boolean;
+  onSave?: () => void;
+  onReset?: () => void;
 };
 
-export function LiveCalculationsCard({ metrics, sprayVolumeLHa }: LiveCalculationsCardProps) {
+export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, onSave, onReset }: LiveCalculationsCardProps) {
   return (
     <Card>
       <CardHeader className="border-b">
@@ -121,6 +125,25 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa }: LiveCalculatio
           </div>
         )}
       </CardContent>
+      <CardFooter className="border-t flex-col gap-2 sm:flex-row">
+        <Button
+          type="submit"
+          form="spray-calculator-form"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          {isSubmitting ? "Saving..." : "Save Application"}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={onReset}
+          disabled={isSubmitting}
+          className="w-full sm:w-auto"
+        >
+          Reset
+        </Button>
+      </CardFooter>
     </Card>
   );
 }

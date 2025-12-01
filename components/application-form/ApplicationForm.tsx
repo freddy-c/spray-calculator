@@ -6,12 +6,14 @@ import { useApplicationForm } from "@/hooks/useApplicationForm";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AreaFieldArray } from "./AreaFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
 import type { FormValues } from "@/lib/application/types";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
 type ApplicationFormProps = {
   mode?: "create" | "edit";
@@ -31,7 +33,15 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
   const watchedSprayVolume = form.watch("sprayVolumeLHa");
 
   return (
-    <div className="container mx-auto mt-10 px-4">
+    <div className="container mx-auto mt-10 mb-10 px-4">
+      <div className="mb-6">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)] items-start">
         <Card className="w-full">
           <CardHeader className="border-b">
@@ -209,16 +219,6 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
               </FieldGroup>
             </form>
           </CardContent>
-          <CardFooter className="border-t">
-            <Field orientation="horizontal">
-              <Button type="submit" form="spray-calculator-form" disabled={isSubmitting}>
-                {isSubmitting ? "Saving..." : "Save Application"}
-              </Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()} disabled={isSubmitting}>
-                Reset
-              </Button>
-            </Field>
-          </CardFooter>
         </Card>
 
         {/* Right: sticky live calculations card */}
@@ -226,6 +226,8 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
           <LiveCalculationsCard
             metrics={metrics}
             sprayVolumeLHa={Number(watchedSprayVolume) || 0}
+            isSubmitting={isSubmitting}
+            onReset={() => form.reset()}
           />
         </div>
       </div>
