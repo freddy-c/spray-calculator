@@ -13,6 +13,11 @@ datasource db {
   provider = "postgresql"
 }
 
+enum ProductType {
+  SOLUBLE
+  LIQUID
+}
+
 model User {
   id            String        @id
   name          String
@@ -24,6 +29,7 @@ model User {
   sessions      Session[]
   accounts      Account[]
   applications  Application[]
+  products      Product[]
 
   @@unique([email])
   @@map("user")
@@ -78,18 +84,19 @@ model Verification {
 }
 
 model Application {
-  id             String            @id @default(cuid())
-  name           String
-  userId         String
-  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  nozzleId       String
-  sprayVolumeLHa Float
-  nozzleSpacingM Float
-  tankSizeL      Float
-  speedKmH       Float
-  areas          ApplicationArea[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id                  String               @id @default(cuid())
+  name                String
+  userId              String
+  user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  nozzleId            String
+  sprayVolumeLHa      Float
+  nozzleSpacingM      Float
+  tankSizeL           Float
+  speedKmH            Float
+  areas               ApplicationArea[]
+  applicationProducts ApplicationProduct[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
 
   @@index([userId])
   @@index([userId, createdAt])
@@ -107,4 +114,36 @@ model ApplicationArea {
 
   @@index([applicationId])
   @@map("application_area")
+}
+
+model Product {
+  id                  String               @id @default(cuid())
+  name                String
+  type                ProductType
+  isPublic            Boolean              @default(false)
+  userId              String?
+  user                User?                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationProducts ApplicationProduct[]
+  createdAt           DateTime             @default(now())
+  updatedAt           DateTime             @updatedAt
+
+  @@index([isPublic])
+  @@index([userId])
+  @@index([isPublic, userId])
+  @@map("product")
+}
+
+model ApplicationProduct {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  ratePerHa     Float
+  order         Int         @default(0)
+
+  @@unique([applicationId, productId])
+  @@index([applicationId])
+  @@index([productId])
+  @@map("application_product")
 }

@@ -1,5 +1,6 @@
 import * as z from "zod";
 import { areaTypeOptions, type AreaType } from "./types";
+import { applicationProductFieldSchema } from "@/lib/product/schemas";
 
 export const areaSchema = z.object({
   label: z.string().min(1, "Label is required"),
@@ -26,4 +27,5 @@ export const formSchema = z.object({
   areas: z
     .array(areaSchema)
     .min(1, "Add at least one area for this application"),
+  products: z.array(applicationProductFieldSchema),
 });

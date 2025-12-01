@@ -1,5 +1,7 @@
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
 import type { FormValues, PressureStatus, SprayMetrics } from "./types";
+import type { ProductTotal } from "@/lib/product/types";
+import { PRODUCT_TYPE_TOTAL_UNITS } from "@/lib/product/types";
 
 export function calculateSprayMetrics(values: FormValues): SprayMetrics {
   const sprayVolume = values.sprayVolumeLHa;
@@ -32,6 +34,20 @@ export function calculateSprayMetrics(values: FormValues): SprayMetrics {
       ? Math.ceil(totalSprayVolumeL / values.tankSizeL)
       : 0;
 
+  // product totals
+  const productTotals: ProductTotal[] = values.products.map((product) => {
+    const totalAmount = totalAreaHa * product.ratePerHa;
+    const unit = PRODUCT_TYPE_TOTAL_UNITS[product.productType];
+    return {
+      productId: product.productId,
+      productName: product.productName,
+      productType: product.productType,
+      ratePerHa: product.ratePerHa,
+      totalAmount,
+      unit,
+    };
+  });
+
   return {
     flowPerNozzleLMin,
     requiredPressureBar,
@@ -40,5 +56,6 @@ export function calculateSprayMetrics(values: FormValues): SprayMetrics {
     totalAreaHa,
     totalSprayVolumeL,
     tanksRequired,
+    productTotals,
   };
 }

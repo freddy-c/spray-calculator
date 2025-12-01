@@ -1,3 +1,5 @@
+import { ApplicationProductField, ProductTotal } from "@/lib/product/types";
+
 export const areaTypeOptions = [
   { value: "green", label: "Green" },
   { value: "tee", label: "Tee" },
@@ -22,6 +24,7 @@ export type FormValues = {
   tankSizeL: number;
   speedKmH: number;
   areas: Area[];
+  products: ApplicationProductField[];
 };
 
 export type PressureStatus = "ok" | "low" | "high";
@@ -34,4 +37,5 @@ export type SprayMetrics = {
   totalAreaHa: number;
   totalSprayVolumeL: number;
   tanksRequired: number;
+  productTotals: ProductTotal[];
 };

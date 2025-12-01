@@ -10,6 +10,7 @@ import { Slider } from "@/components/ui/slider";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { AreaFieldArray } from "./AreaFieldArray";
+import { ProductFieldArray } from "./ProductFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
 import type { FormValues } from "@/lib/application/types";
 import Link from "next/link";
@@ -23,7 +24,7 @@ type ApplicationFormProps = {
 };
 
 export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess }: ApplicationFormProps) {
-  const { form, control, areaFields, appendArea, removeArea, metrics, isSubmitting, onSubmit } = useApplicationForm({
+  const { form, control, areaFields, appendArea, removeArea, productFields, appendProduct, removeProduct, metrics, isSubmitting, onSubmit } = useApplicationForm({
     mode,
     initialValues,
     applicationId,
@@ -82,6 +83,16 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                   fields={areaFields}
                   append={appendArea}
                   remove={removeArea}
+                  errors={form.formState.errors}
+                />
+
+                <FieldSeparator>Products</FieldSeparator>
+
+                <ProductFieldArray
+                  control={control}
+                  fields={productFields}
+                  append={appendProduct}
+                  remove={removeProduct}
                   errors={form.formState.errors}
                 />
 
