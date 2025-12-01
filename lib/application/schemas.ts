@@ -11,6 +11,7 @@ export const areaSchema = z.object({
 });
 
 export const formSchema = z.object({
+  name: z.string().min(1, "Application name is required").max(100, "Name too long"),
   nozzleId: z.string().min(1, "Select a nozzle"),
   sprayVolumeLHa: z.coerce.number<number>()
     .positive("Spray volume must be greater than 0"),

@@ -6,23 +6,46 @@ import { useApplicationForm } from "@/hooks/useApplicationForm";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { AreaFieldArray } from "./AreaFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
+import type { FormValues } from "@/lib/application/types";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 
-export function ApplicationForm() {
-  const { form, control, areaFields, appendArea, removeArea, metrics, onSubmit } = useApplicationForm();
+type ApplicationFormProps = {
+  mode?: "create" | "edit";
+  initialValues?: Partial<FormValues>;
+  applicationId?: string;
+  onSuccess?: () => void;
+};
+
+export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess }: ApplicationFormProps) {
+  const { form, control, areaFields, appendArea, removeArea, metrics, isSubmitting, onSubmit } = useApplicationForm({
+    mode,
+    initialValues,
+    applicationId,
+    onSuccess,
+  });
 
   const watchedSprayVolume = form.watch("sprayVolumeLHa");
 
   return (
-    <div className="container mx-auto mt-10 px-4">
+    <div className="container mx-auto mt-10 mb-10 px-4">
+      <div className="mb-6">
+        <Link href="/dashboard">
+          <Button variant="ghost" size="sm" className="gap-2">
+            <ArrowLeft className="h-4 w-4" />
+            Back to Dashboard
+          </Button>
+        </Link>
+      </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)] items-start">
         <Card className="w-full">
           <CardHeader className="border-b">
-            <CardTitle>Spray Calculator</CardTitle>
+            <CardTitle>{mode === "edit" ? "Edit Application" : "New Application"}</CardTitle>
             <CardDescription>
               Tune your spray settings and see pressure and flow update instantly.
             </CardDescription>
@@ -30,6 +53,30 @@ export function ApplicationForm() {
           <CardContent>
             <form id="spray-calculator-form" onSubmit={onSubmit}>
               <FieldGroup>
+                {/* Application Name */}
+                <Controller
+                  name="name"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="input-name">
+                        Application name
+                      </FieldLabel>
+                      <FieldDescription>Give this application a descriptive name.</FieldDescription>
+                      <Input
+                        id="input-name"
+                        type="text"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="e.g., Spring Greens Treatment"
+                        {...field}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
+                <FieldSeparator>Areas</FieldSeparator>
+
                 <AreaFieldArray
                   control={control}
                   fields={areaFields}
@@ -172,16 +219,6 @@ export function ApplicationForm() {
               </FieldGroup>
             </form>
           </CardContent>
-          <CardFooter className="border-t">
-            <Field orientation="horizontal">
-              <Button type="submit" form="spray-calculator-form">
-                Save settings
-              </Button>
-              <Button type="button" variant="outline" onClick={() => form.reset()}>
-                Reset
-              </Button>
-            </Field>
-          </CardFooter>
         </Card>
 
         {/* Right: sticky live calculations card */}
@@ -189,6 +226,8 @@ export function ApplicationForm() {
           <LiveCalculationsCard
             metrics={metrics}
             sprayVolumeLHa={Number(watchedSprayVolume) || 0}
+            isSubmitting={isSubmitting}
+            onReset={() => form.reset()}
           />
         </div>
       </div>

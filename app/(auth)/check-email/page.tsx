@@ -3,11 +3,10 @@
 import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import Link from "next/link"
-import { useState } from "react"
+import { useState, Suspense } from "react"
 import { sendVerificationEmail } from "@/lib/auth-client"
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get("email")
   const [isResending, setIsResending] = useState(false)
@@ -32,7 +31,7 @@ export default function CheckEmailPage() {
       } else {
         setResendSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setResendError("An unexpected error occurred.")
     } finally {
       setIsResending(false)
@@ -87,5 +86,24 @@ export default function CheckEmailPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
+        <div className="w-full max-w-sm">
+          <Card>
+            <CardHeader>
+              <CardTitle>Check your email</CardTitle>
+              <CardDescription>Loading...</CardDescription>
+            </CardHeader>
+          </Card>
+        </div>
+      </div>
+    }>
+      <CheckEmailContent />
+    </Suspense>
   )
 }
