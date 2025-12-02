@@ -28,6 +28,7 @@ type ApplicationWithAreas = {
   nozzleId: string;
   sprayVolumeLHa: number;
   nozzleSpacingM: number;
+  nozzleCount: number;
   tankSizeL: number;
   speedKmH: number;
   areas: Array<{
@@ -122,7 +123,7 @@ export async function createApplication(
       return { success: false, error: `Invalid form data: ${errors}` };
     }
 
-    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
+    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, nozzleCount, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
     // Validate all product IDs exist and are accessible
     const productIds = products.map(p => p.productId);
@@ -139,6 +140,7 @@ export async function createApplication(
         nozzleId,
         sprayVolumeLHa,
         nozzleSpacingM,
+        nozzleCount,
         tankSizeL,
         speedKmH,
         areas: {
@@ -261,6 +263,7 @@ export async function getApplication(
         nozzleId: application.nozzleId,
         sprayVolumeLHa: application.sprayVolumeLHa,
         nozzleSpacingM: application.nozzleSpacingM,
+        nozzleCount: application.nozzleCount,
         tankSizeL: application.tankSizeL,
         speedKmH: application.speedKmH,
         areas: application.areas.map((area) => ({
@@ -316,7 +319,7 @@ export async function updateApplication(
       return { success: false, error: "Application not found" };
     }
 
-    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
+    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, nozzleCount, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
     // Validate all product IDs exist and are accessible
     const productIds = products.map(p => p.productId);
@@ -349,6 +352,7 @@ export async function updateApplication(
           nozzleId,
           sprayVolumeLHa,
           nozzleSpacingM,
+          nozzleCount,
           tankSizeL,
           speedKmH,
           areas: {

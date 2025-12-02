@@ -7,6 +7,7 @@ export function calculateSprayMetrics(values: FormValues): SprayMetrics {
   const sprayVolume = values.sprayVolumeLHa;
   const nozzleSpacing = values.nozzleSpacingM;
   const speedKmH = values.speedKmH;
+  const nozzleCount = values.nozzleCount;
 
   const nozzle = nozzleCatalog[values.nozzleId];
 
@@ -29,10 +30,16 @@ export function calculateSprayMetrics(values: FormValues): SprayMetrics {
 
   const totalSprayVolumeL = totalAreaHa * sprayVolume;
 
-  const tanksRequired =
-    totalSprayVolumeL > 0 && values.tankSizeL > 0
-      ? Math.ceil(totalSprayVolumeL / values.tankSizeL)
-      : 0;
+  const tanksRequired = totalSprayVolumeL / values.tankSizeL;
+
+  // spray time calculation (lower bound estimate)
+  // sprayer width (m) = nozzle spacing (m) × nozzle count
+  // area covered per hour (ha) = sprayer width (m) × speed (km/h) × 1000 (m/km) / 10000 (m²/ha)
+  // simplified: area covered per hour (ha) = sprayer width (m) × speed (km/h) / 10
+  const sprayerWidthM = nozzleSpacing * nozzleCount;
+  const areaCoveredPerHourHa = (sprayerWidthM * speedKmH) / 10;
+  const sprayTimeHours = areaCoveredPerHourHa > 0 ? totalAreaHa / areaCoveredPerHourHa : 0;
+  const sprayTimeMinutes = sprayTimeHours * 60;
 
   // product totals
   const productTotals: ProductTotal[] = values.products.map((product) => {
@@ -56,6 +63,7 @@ export function calculateSprayMetrics(values: FormValues): SprayMetrics {
     totalAreaHa,
     totalSprayVolumeL,
     tanksRequired,
+    sprayTimeMinutes,
     productTotals,
   };
 }

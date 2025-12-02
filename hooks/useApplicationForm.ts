@@ -18,6 +18,7 @@ const defaultFormValues: FormValues = {
   nozzleId: "syngenta-025-xc",
   sprayVolumeLHa: 300,
   nozzleSpacingM: 0.5,
+  nozzleCount: 40,
   tankSizeL: 400,
   speedKmH: 5,
   areas: [

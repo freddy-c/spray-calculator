@@ -72,6 +72,7 @@ export const auth = betterAuth({
   trustedOrigins: [
     "https://refactored-goldfish-54rxxwvx544c79p5-3000.app.github.dev",
     "http://localhost:3000",
+    "http://127.0.0.1:3000",
   ],
   plugins: [nextCookies()]
 })

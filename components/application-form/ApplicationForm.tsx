@@ -183,6 +183,30 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                   )}
                 />
 
+                {/* Nozzle Count */}
+                <Controller
+                  name="nozzleCount"
+                  control={control}
+                  render={({ field, fieldState }) => (
+                    <Field data-invalid={fieldState.invalid}>
+                      <FieldLabel htmlFor="input-nozzleCount">
+                        Nozzle count
+                      </FieldLabel>
+                      <FieldDescription>Total number of nozzles on the boom.</FieldDescription>
+                      <Input
+                        id="input-nozzleCount"
+                        type="number"
+                        inputMode="numeric"
+                        aria-invalid={fieldState.invalid}
+                        placeholder="40"
+                        step={1}
+                        {...field}
+                      />
+                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                    </Field>
+                  )}
+                />
+
                 {/* Tank Size */}
                 <Controller
                   name="tankSizeL"

@@ -19,6 +19,10 @@ export const formSchema = z.object({
   nozzleSpacingM: z.coerce.number<number>()
     .positive("Nozzle spacing must be greater than 0")
     .lt(10, "Nozzle spacing must be less than 10m"),
+  nozzleCount: z.coerce.number<number>()
+    .int("Nozzle count must be a whole number")
+    .positive("Nozzle count must be greater than 0")
+    .max(200, "Nozzle count seems too large"),
   tankSizeL: z.coerce.number<number>()
     .positive("Tank size must be greater than 0"),
   speedKmH: z.coerce.number<number>()

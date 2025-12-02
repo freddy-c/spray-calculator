@@ -91,6 +91,7 @@ model Application {
   nozzleId            String
   sprayVolumeLHa      Float
   nozzleSpacingM      Float
+  nozzleCount         Int
   tankSizeL           Float
   speedKmH            Float
   areas               ApplicationArea[]
