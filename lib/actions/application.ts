@@ -5,7 +5,8 @@ import { headers } from "next/headers";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { formSchema } from "@/lib/application/schemas";
-import type { FormValues, AreaType } from "@/lib/application/types";
+import type { FormValues, AreaType, SchedulingData, CompletionData } from "@/lib/application/types";
+import { ApplicationStatus } from "@/lib/application/types";
 import type { ApplicationProductField } from "@/lib/product/types";
 import { isCuid } from '@paralleldrive/cuid2';
 import { ProductType } from "@/lib/product/types";
@@ -17,6 +18,9 @@ type ActionResult<T> =
 type ApplicationListItem = {
   id: string;
   name: string;
+  status: ApplicationStatus;
+  scheduledDate: Date | null;
+  completedDate: Date | null;
   createdAt: Date;
   updatedAt: Date;
   totalAreaHa: number;
@@ -198,6 +202,9 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
     const applicationsWithTotalArea = applications.map((app) => ({
       id: app.id,
       name: app.name,
+      status: app.status as ApplicationStatus,
+      scheduledDate: app.scheduledDate,
+      completedDate: app.completedDate,
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,
       totalAreaHa: app.areas.reduce((sum, area) => sum + area.sizeHa, 0),
@@ -424,6 +431,302 @@ export async function deleteApplication(
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete application",
+    };
+  }
+}
+
+/**
+ * Schedule an application (DRAFT -> SCHEDULED)
+ */
+export async function scheduleApplication(
+  id: string,
+  data: SchedulingData
+): Promise<ActionResult<void>> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const application = await prisma.application.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!application) {
+      return { success: false, error: "Application not found" };
+    }
+
+    await prisma.application.update({
+      where: { id },
+      data: {
+        status: ApplicationStatus.SCHEDULED,
+        scheduledDate: data.scheduledDate,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/applications/${id}/edit`);
+    revalidatePath(`/applications/${id}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Error scheduling application:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to schedule application",
+    };
+  }
+}
+
+/**
+ * Complete an application (DRAFT/SCHEDULED -> COMPLETED)
+ */
+export async function completeApplication(
+  id: string,
+  data: CompletionData
+): Promise<ActionResult<void>> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const application = await prisma.application.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!application) {
+      return { success: false, error: "Application not found" };
+    }
+
+    await prisma.application.update({
+      where: { id },
+      data: {
+        status: ApplicationStatus.COMPLETED,
+        completedDate: data.completedDate,
+        operator: data.operator,
+        weatherConditions: data.weatherConditions,
+        notes: data.notes,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/applications/${id}/edit`);
+    revalidatePath(`/applications/${id}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Error completing application:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to complete application",
+    };
+  }
+}
+
+/**
+ * Revert application status to DRAFT
+ */
+export async function revertToDraft(
+  id: string
+): Promise<ActionResult<void>> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const application = await prisma.application.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!application) {
+      return { success: false, error: "Application not found" };
+    }
+
+    await prisma.application.update({
+      where: { id },
+      data: {
+        status: ApplicationStatus.DRAFT,
+        scheduledDate: null,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/applications/${id}/edit`);
+    revalidatePath(`/applications/${id}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Error reverting application:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to revert application",
+    };
+  }
+}
+
+/**
+ * Revert application status to SCHEDULED
+ */
+export async function revertToScheduled(
+  id: string
+): Promise<ActionResult<void>> {
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const application = await prisma.application.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+    });
+
+    if (!application) {
+      return { success: false, error: "Application not found" };
+    }
+
+    if (application.status !== ApplicationStatus.COMPLETED) {
+      return { success: false, error: "Can only revert completed applications" };
+    }
+
+    await prisma.application.update({
+      where: { id },
+      data: {
+        status: ApplicationStatus.SCHEDULED,
+        completedDate: null,
+        operator: null,
+        weatherConditions: null,
+        notes: null,
+      },
+    });
+
+    revalidatePath("/dashboard");
+    revalidatePath(`/applications/${id}/edit`);
+    revalidatePath(`/applications/${id}`);
+    return { success: true, data: undefined };
+  } catch (error) {
+    console.error("Error reverting application:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to revert application",
+    };
+  }
+}
+
+type ApplicationDetailData = {
+  id: string;
+  name: string;
+  status: ApplicationStatus;
+  nozzleId: string;
+  sprayVolumeLHa: number;
+  nozzleSpacingM: number;
+  nozzleCount: number;
+  tankSizeL: number;
+  speedKmH: number;
+  scheduledDate: Date | null;
+  completedDate: Date | null;
+  operator: string | null;
+  weatherConditions: string | null;
+  notes: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  areas: Array<{
+    label: string;
+    type: AreaType;
+    sizeHa: number;
+  }>;
+  products: ApplicationProductField[];
+};
+
+/**
+ * Get complete application details for the detail page
+ */
+export async function getApplicationDetail(
+  id: string
+): Promise<ActionResult<ApplicationDetailData>> {
+  if (isCuid(id) === false) {
+    return { success: false, error: "Invalid application ID" };
+  }
+
+  try {
+    const session = await getSession();
+    if (!session) {
+      return { success: false, error: "Unauthorized" };
+    }
+
+    const application = await prisma.application.findFirst({
+      where: {
+        id,
+        userId: session.user.id,
+      },
+      include: {
+        areas: {
+          orderBy: {
+            order: "asc",
+          },
+        },
+        applicationProducts: {
+          include: {
+            product: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
+      },
+    });
+
+    if (!application) {
+      return { success: false, error: "Application not found" };
+    }
+
+    return {
+      success: true,
+      data: {
+        id: application.id,
+        name: application.name,
+        status: application.status as ApplicationStatus,
+        nozzleId: application.nozzleId,
+        sprayVolumeLHa: application.sprayVolumeLHa,
+        nozzleSpacingM: application.nozzleSpacingM,
+        nozzleCount: application.nozzleCount,
+        tankSizeL: application.tankSizeL,
+        speedKmH: application.speedKmH,
+        scheduledDate: application.scheduledDate,
+        completedDate: application.completedDate,
+        operator: application.operator,
+        weatherConditions: application.weatherConditions,
+        notes: application.notes,
+        createdAt: application.createdAt,
+        updatedAt: application.updatedAt,
+        areas: application.areas.map((area) => ({
+          label: area.label,
+          type: area.type as AreaType,
+          sizeHa: area.sizeHa,
+        })),
+        products: application.applicationProducts.map((ap) => ({
+          productId: ap.productId,
+          productName: ap.product.name,
+          productType: ap.product.type as ProductType,
+          ratePerHa: ap.ratePerHa,
+        })),
+      },
+    };
+  } catch (error) {
+    console.error("Error fetching application detail:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch application detail",
     };
   }
 }

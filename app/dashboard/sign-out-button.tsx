@@ -13,11 +13,12 @@ export function SignOutButton() {
     }
 
     return (
-        <Button
-            onClick={handleSignOut}
-            variant="destructive"
-        >
-            Sign Out
-        </Button>
+        // <Button
+        //     onClick={handleSignOut}
+        //     variant="destructive"
+        // >
+        //     Sign Out
+        // </Button>
+        <span onClick={handleSignOut}>Sign out</span>
     )
 }

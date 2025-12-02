@@ -20,17 +20,16 @@ export default async function DashboardPage() {
     const applications = result.success ? result.data : [];
 
     return (
-        <div className="container mx-auto py-10 px-4">
+        <div>
             <div className="flex justify-between items-center mb-8">
-                <div>
+                {/* <div>
                     <h1 className="text-3xl font-bold">Dashboard</h1>
                     <p className="text-muted-foreground mt-1">Welcome back, {session.user.name}</p>
-                </div>
+                </div> */}
                 <div className="flex gap-2">
-                    <Link href="/applications/new">
+                    <Link href="/dashboard/applications/new">
                         <Button>New Application</Button>
                     </Link>
-                    <SignOutButton />
                 </div>
             </div>
 
@@ -40,19 +39,13 @@ export default async function DashboardPage() {
                     <p className="text-muted-foreground mb-4">
                         Create your first spray application to get started.
                     </p>
-                    <Link href="/applications/new">
+                    <Link href="/dashboard/applications/new">
                         <Button>Create Application</Button>
                     </Link>
                 </div>
             ) : (
                 <ApplicationList applications={applications} />
             )}
-
-            <div className="mt-8 pt-8 border-t">
-                <Link href="/delete-account" className="text-sm text-muted-foreground hover:underline">
-                    Delete Account
-                </Link>
-            </div>
         </div>
     )
 }

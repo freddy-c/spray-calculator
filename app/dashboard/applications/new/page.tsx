@@ -9,7 +9,7 @@ export default async function NewApplicationPage() {
   });
 
   if (!session) {
-    redirect("/sign-in?callbackUrl=/applications/new");
+    redirect("/sign-in?callbackUrl=/dashboard/applications/new");
   }
 
   return <ApplicationForm mode="create" />;

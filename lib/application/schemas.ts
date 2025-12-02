@@ -33,3 +33,14 @@ export const formSchema = z.object({
     .min(1, "Add at least one area for this application"),
   products: z.array(applicationProductFieldSchema),
 });
+
+export const scheduleSchema = z.object({
+  scheduledDate: z.string().min(1, "Scheduled date is required"),
+});
+
+export const completeSchema = z.object({
+  completedDate: z.string().min(1, "Completed date is required"),
+  operator: z.string().optional(),
+  weatherConditions: z.string().optional(),
+  notes: z.string().optional(),
+});

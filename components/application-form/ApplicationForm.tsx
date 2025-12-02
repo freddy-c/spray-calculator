@@ -1,6 +1,7 @@
 "use client";
 
 import { Controller } from "react-hook-form";
+import { useRouter } from "next/navigation";
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
 import { useApplicationForm } from "@/hooks/useApplicationForm";
 import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet } from "@/components/ui/field";
@@ -13,7 +14,6 @@ import { AreaFieldArray } from "./AreaFieldArray";
 import { ProductFieldArray } from "./ProductFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
 import type { FormValues } from "@/lib/application/types";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 type ApplicationFormProps = {
@@ -24,6 +24,7 @@ type ApplicationFormProps = {
 };
 
 export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess }: ApplicationFormProps) {
+  const router = useRouter();
   const { form, control, areaFields, appendArea, removeArea, productFields, appendProduct, removeProduct, metrics, isSubmitting, onSubmit } = useApplicationForm({
     mode,
     initialValues,
@@ -36,12 +37,10 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
   return (
     <div className="container mx-auto mt-10 mb-10 px-4">
       <div className="mb-6">
-        <Link href="/dashboard">
-          <Button variant="ghost" size="sm" className="gap-2">
-            <ArrowLeft className="h-4 w-4" />
-            Back to Dashboard
-          </Button>
-        </Link>
+        <Button variant="ghost" size="sm" className="gap-2" onClick={() => router.back()}>
+          <ArrowLeft className="h-4 w-4" />
+          Back
+        </Button>
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,3fr)] items-start">
         <Card className="w-full">

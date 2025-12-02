@@ -17,7 +17,7 @@ export default async function EditApplicationPage({ params }: PageProps) {
 
   if (!session) {
     const { id } = await params;
-    redirect(`/sign-in?callbackUrl=/applications/${id}/edit`);
+    redirect(`/sign-in?callbackUrl=/dashboard/applications/${id}/edit`);
   }
 
   const { id } = await params;

@@ -18,6 +18,12 @@ enum ProductType {
   LIQUID
 }
 
+enum ApplicationStatus {
+  DRAFT
+  SCHEDULED
+  COMPLETED
+}
+
 model User {
   id            String        @id
   name          String
@@ -88,12 +94,18 @@ model Application {
   name                String
   userId              String
   user                User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status              ApplicationStatus    @default(DRAFT)
   nozzleId            String
   sprayVolumeLHa      Float
   nozzleSpacingM      Float
   nozzleCount         Int
   tankSizeL           Float
   speedKmH            Float
+  scheduledDate       DateTime?
+  completedDate       DateTime?
+  operator            String?
+  weatherConditions   String?
+  notes               String?
   areas               ApplicationArea[]
   applicationProducts ApplicationProduct[]
   createdAt           DateTime             @default(now())
@@ -101,6 +113,7 @@ model Application {
 
   @@index([userId])
   @@index([userId, createdAt])
+  @@index([userId, status])
   @@map("application")
 }
 

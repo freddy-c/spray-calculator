@@ -16,6 +16,12 @@ export type Area = {
   sizeHa: number;
 };
 
+export enum ApplicationStatus {
+  DRAFT = "DRAFT",
+  SCHEDULED = "SCHEDULED",
+  COMPLETED = "COMPLETED",
+}
+
 export type FormValues = {
   name: string;
   nozzleId: string;
@@ -26,6 +32,17 @@ export type FormValues = {
   speedKmH: number;
   areas: Area[];
   products: ApplicationProductField[];
+};
+
+export type SchedulingData = {
+  scheduledDate: Date;
+};
+
+export type CompletionData = {
+  completedDate: Date;
+  operator?: string;
+  weatherConditions?: string;
+  notes?: string;
 };
 
 export type PressureStatus = "ok" | "low" | "high";
