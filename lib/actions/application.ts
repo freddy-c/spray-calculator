@@ -6,7 +6,9 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { formSchema } from "@/lib/application/schemas";
 import type { FormValues, AreaType } from "@/lib/application/types";
+import type { ApplicationProductField } from "@/lib/product/types";
 import { isCuid } from '@paralleldrive/cuid2';
+import { ProductType } from "@/lib/product/types";
 
 type ActionResult<T> =
   | { success: true; data: T }
@@ -33,6 +35,7 @@ type ApplicationWithAreas = {
     type: AreaType;
     sizeHa: number;
   }>;
+  products: ApplicationProductField[];
 };
 
 /**
@@ -48,6 +51,53 @@ async function getSession() {
   }
 
   return session;
+}
+
+/**
+ * Validate that all product IDs exist and are accessible by the user
+ */
+async function validateProductIds(
+  productIds: string[],
+  userId: string
+): Promise<{ valid: boolean; error?: string }> {
+  if (productIds.length === 0) {
+    return { valid: true };
+  }
+
+  // Check all product IDs are valid CUIDs
+  const invalidIds = productIds.filter(id => !isCuid(id));
+  if (invalidIds.length > 0) {
+    return {
+      valid: false,
+      error: `Invalid product ID format: ${invalidIds.join(', ')}`
+    };
+  }
+
+  // Verify all products exist and are accessible (public or owned by user)
+  const products = await prisma.product.findMany({
+    where: {
+      id: { in: productIds },
+      OR: [
+        { isPublic: true },
+        { userId: userId },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const foundIds = new Set(products.map(p => p.id));
+  const missingIds = productIds.filter(id => !foundIds.has(id));
+
+  if (missingIds.length > 0) {
+    return {
+      valid: false,
+      error: `Products not found or not accessible: ${missingIds.join(', ')}`
+    };
+  }
+
+  return { valid: true };
 }
 
 /**
@@ -72,9 +122,16 @@ export async function createApplication(
       return { success: false, error: `Invalid form data: ${errors}` };
     }
 
-    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas } = validationResult.data;
+    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
-    // Create application with areas in a transaction
+    // Validate all product IDs exist and are accessible
+    const productIds = products.map(p => p.productId);
+    const productValidation = await validateProductIds(productIds, session.user.id);
+    if (!productValidation.valid) {
+      return { success: false, error: productValidation.error || "Invalid products" };
+    }
+
+    // Create application with areas and products in a transaction
     const application = await prisma.application.create({
       data: {
         name,
@@ -89,6 +146,13 @@ export async function createApplication(
             label: area.label,
             type: area.type,
             sizeHa: area.sizeHa,
+            order: index,
+          })),
+        },
+        applicationProducts: {
+          create: products.map((product, index) => ({
+            productId: product.productId,
+            ratePerHa: product.ratePerHa,
             order: index,
           })),
         },
@@ -174,6 +238,14 @@ export async function getApplication(
             order: "asc",
           },
         },
+        applicationProducts: {
+          include: {
+            product: true,
+          },
+          orderBy: {
+            order: "asc",
+          },
+        },
       },
     });
 
@@ -195,6 +267,12 @@ export async function getApplication(
           label: area.label,
           type: area.type as AreaType,
           sizeHa: area.sizeHa,
+        })),
+        products: application.applicationProducts.map((ap) => ({
+          productId: ap.productId,
+          productName: ap.product.name,
+          productType: ap.product.type as ProductType,
+          ratePerHa: ap.ratePerHa,
         })),
       },
     };
@@ -238,9 +316,16 @@ export async function updateApplication(
       return { success: false, error: "Application not found" };
     }
 
-    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas } = validationResult.data;
+    const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
-    // Update application and replace all areas in a transaction
+    // Validate all product IDs exist and are accessible
+    const productIds = products.map(p => p.productId);
+    const productValidation = await validateProductIds(productIds, session.user.id);
+    if (!productValidation.valid) {
+      return { success: false, error: productValidation.error || "Invalid products" };
+    }
+
+    // Update application and replace all areas and products in a transaction
     await prisma.$transaction([
       // Delete all existing areas
       prisma.applicationArea.deleteMany({
@@ -248,7 +333,13 @@ export async function updateApplication(
           applicationId: id,
         },
       }),
-      // Update application and create new areas
+      // Delete all existing products
+      prisma.applicationProduct.deleteMany({
+        where: {
+          applicationId: id,
+        },
+      }),
+      // Update application and create new areas and products
       prisma.application.update({
         where: {
           id,
@@ -265,6 +356,13 @@ export async function updateApplication(
               label: area.label,
               type: area.type,
               sizeHa: area.sizeHa,
+              order: index,
+            })),
+          },
+          applicationProducts: {
+            create: products.map((product, index) => ({
+              productId: product.productId,
+              ratePerHa: product.ratePerHa,
               order: index,
             })),
           },

@@ -27,6 +27,7 @@ const defaultFormValues: FormValues = {
       sizeHa: 1,
     },
   ],
+  products: [],
 };
 
 export function useApplicationForm(props?: UseApplicationFormProps) {
@@ -52,6 +53,15 @@ export function useApplicationForm(props?: UseApplicationFormProps) {
   } = useFieldArray({
     control,
     name: "areas",
+  });
+
+  const {
+    fields: productFields,
+    append: appendProduct,
+    remove: removeProduct,
+  } = useFieldArray({
+    control,
+    name: "products",
   });
 
   const watchedValues = watch();
@@ -106,6 +116,9 @@ export function useApplicationForm(props?: UseApplicationFormProps) {
     areaFields,
     appendArea,
     removeArea,
+    productFields,
+    appendProduct,
+    removeProduct,
     metrics,
     isSubmitting,
     onSubmit: handleSubmit(onSubmit),

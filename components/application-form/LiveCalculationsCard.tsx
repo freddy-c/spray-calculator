@@ -2,6 +2,7 @@ import type { SprayMetrics } from "@/lib/application";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { PRODUCT_TYPE_UNITS } from "@/lib/product/types";
 
 type LiveCalculationsCardProps = {
   metrics: SprayMetrics | null;
@@ -121,6 +122,28 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 "Pressure is above the recommended range — consider reducing speed or reducing spray volume."}
               {!metrics && "Enter values to see pressure guidance."}
             </p>
+          </div>
+        )}
+
+        {/* Product Requirements */}
+        {metrics && metrics.productTotals.length > 0 && (
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium">Product Requirements</h3>
+            <div className="space-y-2">
+              {metrics.productTotals.map((product) => (
+                <div key={product.productId} className="rounded-md border p-3">
+                  <p className="text-sm font-medium">{product.productName}</p>
+                  <div className="mt-1 flex items-baseline justify-between">
+                    <p className="text-xs text-muted-foreground">
+                      Rate: {product.ratePerHa.toFixed(2)} {PRODUCT_TYPE_UNITS[product.productType]}
+                    </p>
+                    <p className="text-lg font-semibold">
+                      {product.totalAmount.toFixed(2)} {product.unit}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </CardContent>
