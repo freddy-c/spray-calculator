@@ -54,6 +54,53 @@ async function getSession() {
 }
 
 /**
+ * Validate that all product IDs exist and are accessible by the user
+ */
+async function validateProductIds(
+  productIds: string[],
+  userId: string
+): Promise<{ valid: boolean; error?: string }> {
+  if (productIds.length === 0) {
+    return { valid: true };
+  }
+
+  // Check all product IDs are valid CUIDs
+  const invalidIds = productIds.filter(id => !isCuid(id));
+  if (invalidIds.length > 0) {
+    return {
+      valid: false,
+      error: `Invalid product ID format: ${invalidIds.join(', ')}`
+    };
+  }
+
+  // Verify all products exist and are accessible (public or owned by user)
+  const products = await prisma.product.findMany({
+    where: {
+      id: { in: productIds },
+      OR: [
+        { isPublic: true },
+        { userId: userId },
+      ],
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const foundIds = new Set(products.map(p => p.id));
+  const missingIds = productIds.filter(id => !foundIds.has(id));
+
+  if (missingIds.length > 0) {
+    return {
+      valid: false,
+      error: `Products not found or not accessible: ${missingIds.join(', ')}`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Create a new application
  */
 export async function createApplication(
@@ -76,6 +123,13 @@ export async function createApplication(
     }
 
     const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
+
+    // Validate all product IDs exist and are accessible
+    const productIds = products.map(p => p.productId);
+    const productValidation = await validateProductIds(productIds, session.user.id);
+    if (!productValidation.valid) {
+      return { success: false, error: productValidation.error || "Invalid products" };
+    }
 
     // Create application with areas and products in a transaction
     const application = await prisma.application.create({
@@ -263,6 +317,13 @@ export async function updateApplication(
     }
 
     const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, tankSizeL, speedKmH, areas, products } = validationResult.data;
+
+    // Validate all product IDs exist and are accessible
+    const productIds = products.map(p => p.productId);
+    const productValidation = await validateProductIds(productIds, session.user.id);
+    if (!productValidation.valid) {
+      return { success: false, error: productValidation.error || "Invalid products" };
+    }
 
     // Update application and replace all areas and products in a transaction
     await prisma.$transaction([

@@ -26,7 +26,7 @@ export function CreateProductForm({ onCancel, onProductCreated }: CreateProductF
   const {
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<CreateProductInput>({
     resolver: zodResolver(createProductSchema),
     defaultValues: {
