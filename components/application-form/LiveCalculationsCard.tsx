@@ -94,7 +94,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
               </TooltipContent>
             </Tooltip>
             <p className="text-xl font-semibold">
-              {metrics ? metrics.totalSprayVolumeL.toFixed(0) : "—"} L
+              {metrics ? metrics.totalSprayVolumeL.toFixed(2) : "—"} L
             </p>
           </div>
 
@@ -108,7 +108,40 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
               </TooltipContent>
             </Tooltip>
             <p className="text-xl font-semibold">
-              {metrics ? metrics.tanksRequired : "—"}
+              {metrics ? metrics.tanksRequired.toFixed(2) : "—"}
+            </p>
+          </div>
+        </div>
+
+        {/* Third row: spray time */}
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="rounded-md border p-3">
+            <Tooltip>
+              <TooltipTrigger>
+                <p className="text-sm text-muted-foreground">Spray time</p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Estimated time to spray the entire area in a single pass without stopping. Actual time will be higher due to turns, fills, and overlaps.</p>
+              </TooltipContent>
+            </Tooltip>
+            <p className="text-xl font-semibold">
+              {metrics ? (() => {
+                const totalMinutes = Math.round(metrics.sprayTimeMinutes);
+                const hours = Math.floor(totalMinutes / 60);
+                const minutes = totalMinutes % 60;
+
+                const parts: string[] = [];
+
+                if (hours > 0) {
+                  parts.push(`${hours}h`);
+                }
+
+                if (minutes > 0 || parts.length === 0) {
+                  parts.push(`${minutes}m`);
+                }
+
+                return parts.join(" ");
+              })() : "—"}
             </p>
           </div>
         </div>

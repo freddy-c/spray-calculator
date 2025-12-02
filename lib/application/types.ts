@@ -21,6 +21,7 @@ export type FormValues = {
   nozzleId: string;
   sprayVolumeLHa: number;
   nozzleSpacingM: number;
+  nozzleCount: number;
   tankSizeL: number;
   speedKmH: number;
   areas: Area[];
@@ -37,5 +38,6 @@ export type SprayMetrics = {
   totalAreaHa: number;
   totalSprayVolumeL: number;
   tanksRequired: number;
+  sprayTimeMinutes: number;
   productTotals: ProductTotal[];
 };
