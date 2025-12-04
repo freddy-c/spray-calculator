@@ -1,10 +1,8 @@
 "use client"
 
-import {
-  ResetPasswordForm,
-  type ResetPasswordFormValues,
-} from "@/components/auth/reset-password-form"
-import { resetPassword } from "@/lib/auth-client"
+import { ResetPasswordForm } from "@/components/features/auth"
+import { resetPassword } from "@/lib/core/auth/client"
+import { type ResetPasswordInput } from "@/lib/core/auth"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useState, Suspense } from "react"
 
@@ -18,7 +16,7 @@ function ResetPasswordContent() {
   const token = searchParams.get("token")
   const tokenError = !token ? "Invalid or missing reset token. Please request a new password reset link." : null
 
-  const handleSubmit = async (data: ResetPasswordFormValues) => {
+  const handleSubmit = async (data: ResetPasswordInput) => {
     if (!token) {
       setError("Invalid or missing reset token.")
       return

@@ -1,7 +1,8 @@
 "use client"
 
-import { LoginForm, type LoginFormValues } from "@/components/auth/login-form"
-import { signIn } from "@/lib/auth-client"
+import { LoginForm } from "@/components/features/auth"
+import { signIn } from "@/lib/core/auth/client"
+import { type LoginInput } from "@/lib/core/auth"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Suspense, useState } from "react"
 
@@ -27,7 +28,7 @@ function SignInContent() {
       ? "Verification link has expired. Please request a new verification email by attempting to sign in again."
       : null
 
-  const handleSubmit = async (data: LoginFormValues) => {
+  const handleSubmit = async (data: LoginInput) => {
     setError(null)
     setIsLoading(true)
 

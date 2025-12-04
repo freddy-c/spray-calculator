@@ -1,8 +1,8 @@
 import { redirect, notFound } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { getApplication } from "@/lib/actions/application";
-import { ApplicationForm } from "@/components/application-form/ApplicationForm";
+import { auth } from "@/lib/core/auth/server";
+import { getApplication } from "@/lib/domain/application/actions";
+import { ApplicationForm } from "@/components/features/application/form";
 
 type PageProps = {
   params: Promise<{

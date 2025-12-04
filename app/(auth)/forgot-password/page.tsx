@@ -1,10 +1,8 @@
 "use client"
 
-import {
-  ForgotPasswordForm,
-  type ForgotPasswordFormValues,
-} from "@/components/auth/forgot-password-form"
-import { requestPasswordReset } from "@/lib/auth-client"
+import { ForgotPasswordForm } from "@/components/features/auth"
+import { requestPasswordReset } from "@/lib/core/auth/client"
+import { type ForgotPasswordInput } from "@/lib/core/auth"
 import { useState } from "react"
 
 export default function ForgotPasswordPage() {
@@ -12,7 +10,7 @@ export default function ForgotPasswordPage() {
   const [success, setSuccess] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: ForgotPasswordFormValues) => {
+  const handleSubmit = async (data: ForgotPasswordInput) => {
     setError(null)
     setSuccess(false)
     setIsLoading(true)

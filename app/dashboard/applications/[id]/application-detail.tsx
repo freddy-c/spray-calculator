@@ -14,14 +14,14 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ApplicationStatus } from "@/lib/application/types";
-import type { ApplicationProductField } from "@/lib/product/types";
-import { calculateSprayMetrics } from "@/lib/application/calculations";
+import { ApplicationStatus } from "@/lib/domain/application/types";
+import type { ApplicationProductField } from "@/lib/domain/product/types";
+import { calculateSprayMetrics } from "@/lib/domain/application/calculations";
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
-import { areaTypeOptions } from "@/lib/application/types";
+import { areaTypeOptions } from "@/lib/domain/application/types";
 import { ScheduleDialog } from "./schedule-dialog";
 import { CompleteDialog } from "./complete-dialog";
-import { revertToDraft, revertToScheduled } from "@/lib/actions/application";
+import { revertToDraft, revertToScheduled } from "@/lib/domain/application/actions";
 import { toast } from "sonner";
 import {
   AlertDialog,

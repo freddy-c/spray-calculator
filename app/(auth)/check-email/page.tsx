@@ -4,7 +4,7 @@ import { useSearchParams } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { useState, Suspense } from "react"
-import { sendVerificationEmail } from "@/lib/auth-client"
+import { sendVerificationEmail } from "@/lib/core/auth/client"
 
 function CheckEmailContent() {
   const searchParams = useSearchParams()

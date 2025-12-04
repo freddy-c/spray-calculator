@@ -14,12 +14,9 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Field, FieldLabel, FieldError } from "@/components/ui/field";
-import { scheduleApplication } from "@/lib/actions/application";
-import { scheduleSchema } from "@/lib/application/schemas";
+import { scheduleApplication } from "@/lib/domain/application/actions";
+import { scheduleApplicationSchema, type ScheduleApplicationInput } from "@/lib/domain/application/schemas";
 import { toast } from "sonner";
-import type { z } from "zod";
-
-type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
 type ScheduleDialogProps = {
   applicationId: string;
@@ -39,18 +36,16 @@ export function ScheduleDialog({
     handleSubmit,
     formState: { isSubmitting },
     reset,
-  } = useForm<ScheduleFormValues>({
-    resolver: zodResolver(scheduleSchema),
+  } = useForm<ScheduleApplicationInput>({
+    resolver: zodResolver(scheduleApplicationSchema),
     defaultValues: {
       scheduledDate: "",
     },
   });
 
-  const onSubmit = async (data: ScheduleFormValues) => {
+  const onSubmit = async (data: ScheduleApplicationInput) => {
     try {
-      const result = await scheduleApplication(applicationId, {
-        scheduledDate: new Date(data.scheduledDate),
-      });
+      const result = await scheduleApplication(applicationId, data);
 
       if (result.success) {
         toast.success("Application scheduled successfully");

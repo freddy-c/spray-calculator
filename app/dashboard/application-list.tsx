@@ -4,8 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { deleteApplication } from "@/lib/actions/application";
-import { ApplicationStatus } from "@/lib/application/types";
+import { deleteApplication } from "@/lib/domain/application/actions";
+import { ApplicationStatus } from "@/lib/domain/application/types";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import {
@@ -34,7 +34,7 @@ type ApplicationListProps = {
   applications: Application[];
 };
 
-export function StatusBadge({ status }: { status: ApplicationStatus }) {
+function StatusBadge({ status }: { status: ApplicationStatus }) {
   let text: string = "";
 
   switch (status) {

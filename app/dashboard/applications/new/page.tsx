@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
-import { auth } from "@/lib/auth";
-import { ApplicationForm } from "@/components/application-form/ApplicationForm";
+import { auth } from "@/lib/core/auth/server";
+import { ApplicationForm } from "@/components/features/application/form";
 
 export default async function NewApplicationPage() {
   const session = await auth.api.getSession({

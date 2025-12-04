@@ -1,10 +1,8 @@
 "use client"
 
-import {
-  DeleteAccountForm,
-  type DeleteAccountFormValues,
-} from "@/components/auth/delete-account-form"
-import { deleteUser, signOut } from "@/lib/auth-client"
+import { DeleteAccountForm } from "@/components/features/auth"
+import { deleteUser, signOut } from "@/lib/core/auth/client"
+import { type DeleteAccountInput } from "@/lib/core/auth"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -13,7 +11,7 @@ export default function DeleteAccountPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: DeleteAccountFormValues) => {
+  const handleSubmit = async (data: DeleteAccountInput) => {
     setError(null)
     setIsLoading(true)
 

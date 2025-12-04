@@ -15,12 +15,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Field, FieldLabel, FieldError, FieldDescription } from "@/components/ui/field";
-import { completeApplication } from "@/lib/actions/application";
-import { completeSchema } from "@/lib/application/schemas";
+import { completeApplication } from "@/lib/domain/application/actions";
+import { completeApplicationSchema, type CompleteApplicationInput } from "@/lib/domain/application/schemas";
 import { toast } from "sonner";
-import type { z } from "zod";
-
-type CompleteFormValues = z.infer<typeof completeSchema>;
 
 type CompleteDialogProps = {
   applicationId: string;
@@ -40,8 +37,8 @@ export function CompleteDialog({
     handleSubmit,
     formState: { isSubmitting },
     reset,
-  } = useForm<CompleteFormValues>({
-    resolver: zodResolver(completeSchema),
+  } = useForm<CompleteApplicationInput>({
+    resolver: zodResolver(completeApplicationSchema),
     defaultValues: {
       completedDate: "",
       operator: "",
@@ -50,14 +47,9 @@ export function CompleteDialog({
     },
   });
 
-  const onSubmit = async (data: CompleteFormValues) => {
+  const onSubmit = async (data: CompleteApplicationInput) => {
     try {
-      const result = await completeApplication(applicationId, {
-        completedDate: new Date(data.completedDate),
-        operator: data.operator || undefined,
-        weatherConditions: data.weatherConditions || undefined,
-        notes: data.notes || undefined,
-      });
+      const result = await completeApplication(applicationId, data);
 
       if (result.success) {
         toast.success("Application completed successfully");

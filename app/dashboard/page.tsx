@@ -1,51 +1,152 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/core/auth/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignOutButton } from "./sign-out-button";
 import Link from "next/link";
-import { getApplications } from "@/lib/actions/application";
+import { getApplications } from "@/lib/domain/application/actions";
 import { ApplicationList } from "./application-list";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IconCircleCheckFilled, IconClipboardList, IconClockFilled, IconPlus } from "@tabler/icons-react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+
+const statusConfig: Record<
+    string,
+    {
+        icon?: React.ComponentType<{ className?: string }>;
+        iconClassName?: string;
+        label: string;
+    }
+> = {
+    COMPLETED: {
+        icon: IconCircleCheckFilled,
+        iconClassName: "fill-green-500",
+        label: "Completed",
+    },
+    SCHEDULED: {
+        icon: IconClockFilled,
+        iconClassName: "fill-blue-500",
+        label: "Scheduled",
+    },
+    DRAFT: {
+        label: "Draft",
+    },
+};
 
 export default async function DashboardPage() {
     const session = await auth.api.getSession({
         headers: await headers()
     })
 
-    if(!session) {
+    if (!session) {
         redirect("/sign-in")
     }
 
     const result = await getApplications();
     const applications = result.success ? result.data : [];
+    // const applications = [];
 
     return (
         <div>
-            <div className="flex justify-between items-center mb-8">
-                {/* <div>
-                    <h1 className="text-3xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground mt-1">Welcome back, {session.user.name}</p>
-                </div> */}
-                <div className="flex gap-2">
-                    <Link href="/dashboard/applications/new">
-                        <Button>New Application</Button>
-                    </Link>
-                </div>
-            </div>
+            {applications.length > 0 ? (
+                <div className="space-y-4">
+                    <Tabs defaultValue="all">
+                        <div className="flex">
+                            <TabsList>
+                                <TabsTrigger value="all">All</TabsTrigger>
+                                <TabsTrigger value="Draft">Draft</TabsTrigger>
+                                <TabsTrigger value="Scheduled">Scheduled</TabsTrigger>
+                                <TabsTrigger value="Completed">Completed</TabsTrigger>
+                            </TabsList>
+                            <div className="ml-auto">
+                                <Button variant="outline" size="sm" >
+                                    <IconPlus />
+                                    <Link href="/dashboard/applications/new" className="hidden lg:inline">New Application</Link>
+                                </Button>
+                            </div>
+                        </div>
+                        <TabsContent value="all" className="overflow-hidden rounded-lg border">
+                            <Table>
+                                <TableHeader className="bg-muted">
+                                    <TableRow>
+                                        <TableHead>
+                                            Name
+                                        </TableHead>
 
-            {applications.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg bg-muted/50">
-                    <h2 className="text-xl font-semibold mb-2">No applications yet</h2>
-                    <p className="text-muted-foreground mb-4">
-                        Create your first spray application to get started.
-                    </p>
-                    <Link href="/dashboard/applications/new">
-                        <Button>Create Application</Button>
-                    </Link>
-                </div>
+                                        <TableHead>
+                                            Status
+                                        </TableHead>
+
+                                        <TableHead>
+                                            Total Area (ha)
+                                        </TableHead>
+                                        <TableHead>
+                                            Last Updated
+                                        </TableHead>
+                                    </TableRow>
+                                </TableHeader>
+                                <TableBody>
+                                    {applications
+                                        .map((application) => {
+                                            const { icon: StatusIcon, iconClassName, label } = statusConfig[application.status]
+
+                                            return (
+                                                <TableRow key={application.id} className="hover:bg-accent/50">
+                                                    <TableCell>
+                                                        <Link
+                                                            href={`/dashboard/applications/${application.id}`}
+                                                            className="hover:underline"
+                                                        >
+                                                            {application.name}
+                                                        </Link>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Badge variant="outline" className="text-muted-foreground px-2">
+                                                            {StatusIcon && <StatusIcon className={iconClassName} />}
+                                                            {label}
+                                                        </Badge>
+                                                    </TableCell>
+                                                    <TableCell>{application.totalAreaHa}</TableCell>
+                                                    <TableCell>
+                                                        {new Intl.DateTimeFormat(undefined, {
+                                                            year: "numeric",
+                                                            month: "short",
+                                                            day: "numeric",
+                                                            hour: "2-digit",
+                                                            minute: "2-digit",
+                                                            hourCycle: "h23",
+                                                        }).format(new Date(application.updatedAt))}
+
+                                                    </TableCell>
+                                                </TableRow>
+                                            )
+                                        })}
+                                </TableBody>
+                            </Table>
+                        </TabsContent>
+                    </Tabs>
+                </div >
             ) : (
-                <ApplicationList applications={applications} />
-            )}
-        </div>
+                <div className="w-full flex-1 rounded-lg border border-dashed">
+                    <Empty>
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <IconClipboardList />
+                            </EmptyMedia>
+                            <EmptyTitle>No applications yet</EmptyTitle>
+                            <EmptyDescription>Create your first spray application to get started.</EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <Button variant="outline" size="sm" >
+                                <IconPlus />
+                                <Link href="/dashboard/applications/new" className="hidden lg:inline">New Application</Link>
+                            </Button>
+                        </EmptyContent>
+                    </Empty>
+                </div>
+            )
+            }
+        </div >
     )
 }
