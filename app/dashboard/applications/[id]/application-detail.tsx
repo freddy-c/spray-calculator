@@ -19,20 +19,8 @@ import type { ApplicationProductField } from "@/lib/domain/product/types";
 import { calculateSprayMetrics } from "@/lib/domain/application/calculations";
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
 import { areaTypeOptions } from "@/lib/domain/application/types";
-import { ScheduleDialog } from "./schedule-dialog";
-import { CompleteDialog } from "./complete-dialog";
-import { revertToDraft, revertToScheduled } from "@/lib/domain/application/actions";
-import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { StatusDropdown } from "./status-dropdown";
+import { DeleteApplicationDialog } from "./delete-dialog";
 
 type ApplicationDetailProps = {
   application: {
@@ -62,10 +50,7 @@ type ApplicationDetailProps = {
 };
 
 export function ApplicationDetail({ application }: ApplicationDetailProps) {
-  const [scheduleDialogOpen, setScheduleDialogOpen] = useState(false);
-  const [completeDialogOpen, setCompleteDialogOpen] = useState(false);
-  const [revertDialogOpen, setRevertDialogOpen] = useState(false);
-  const [isReverting, setIsReverting] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const router = useRouter();
 
   const metrics = calculateSprayMetrics({
@@ -94,40 +79,6 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
     });
   };
 
-  const handleRevert = async () => {
-    setIsReverting(true);
-    try {
-      let result;
-      if (application.status === ApplicationStatus.COMPLETED) {
-        result = await revertToScheduled(application.id);
-      } else if (application.status === ApplicationStatus.SCHEDULED) {
-        result = await revertToDraft(application.id);
-      }
-
-      if (result?.success) {
-        toast.success("Application status reverted successfully");
-        setRevertDialogOpen(false);
-        router.refresh();
-      } else {
-        toast.error(result?.error || "Failed to revert application");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to revert application");
-    } finally {
-      setIsReverting(false);
-    }
-  };
-
-  const getRevertTargetStatus = () => {
-    if (application.status === ApplicationStatus.COMPLETED) {
-      return "Scheduled";
-    } else if (application.status === ApplicationStatus.SCHEDULED) {
-      return "Draft";
-    }
-    return "";
-  };
-
   return (
     <div className="space-y-6">
       {/* Header with Status and Actions */}
@@ -135,8 +86,10 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
         <div className="flex items-center gap-3">
           <StatusBadge status={application.status} />
           <div className="text-sm text-muted-foreground">
-            {application.scheduledDate && `Scheduled: ${formatDate(application.scheduledDate)}`}
-            {application.completedDate && `Completed: ${formatDate(application.completedDate)}`}
+            {application.status === ApplicationStatus.SCHEDULED && application.scheduledDate &&
+              `Scheduled: ${formatDate(application.scheduledDate)}`}
+            {application.status === ApplicationStatus.COMPLETED && application.completedDate &&
+              `Completed: ${formatDate(application.completedDate)}`}
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -144,38 +97,20 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
             <Button variant="outline" size="sm">Edit</Button>
           </Link>
 
-          {application.status === ApplicationStatus.DRAFT && (
-            <>
-              <Button size="sm" onClick={() => setScheduleDialogOpen(true)}>
-                Schedule
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setCompleteDialogOpen(true)}>
-                Mark Complete
-              </Button>
-            </>
-          )}
+          <StatusDropdown
+            applicationId={application.id}
+            currentStatus={application.status}
+          />
 
-          {application.status === ApplicationStatus.SCHEDULED && (
-            <>
-              <Button size="sm" onClick={() => setCompleteDialogOpen(true)}>
-                Complete
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setRevertDialogOpen(true)}>
-                Unschedule
-              </Button>
-            </>
-          )}
-
-          {application.status === ApplicationStatus.COMPLETED && (
-            <Button size="sm" variant="outline" onClick={() => setRevertDialogOpen(true)}>
-              Revert
-            </Button>
-          )}
+          <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+            Delete
+          </Button>
         </div>
       </div>
 
       {/* Completion Details */}
-      {(application.operator || application.weatherConditions || application.notes) && (
+      {application.status === ApplicationStatus.COMPLETED &&
+       (application.operator || application.weatherConditions || application.notes) && (
         <Card>
           <CardHeader className="border-b">
             <CardTitle>Completion Details</CardTitle>
@@ -212,7 +147,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
             <CardHeader className="border-b">
               <CardTitle>Areas</CardTitle>
               <CardDescription>
-                {metrics.totalAreaHa.toFixed(3)} ha total
+                {metrics.totalAreaHa} ha total
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -231,7 +166,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                       <TableCell className="text-muted-foreground">
                         {areaTypeOptions.find(opt => opt.value === area.type)?.label}
                       </TableCell>
-                      <TableCell className="text-right">{area.sizeHa.toFixed(3)}</TableCell>
+                      <TableCell className="text-right">{area.sizeHa}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -258,7 +193,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                     <TableRow key={product.productId}>
                       <TableCell>{product.productName}</TableCell>
                       <TableCell className="text-right text-muted-foreground">
-                        {product.ratePerHa.toFixed(0)} {product.unit}/ha
+                        {product.ratePerHa} {product.unit}/ha
                       </TableCell>
                       <TableCell className="text-right text-muted-foreground">
                         {product.totalAmount.toFixed(2)} {product.unit}
@@ -333,7 +268,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Total Spray Volume</p>
-                    <p className="text-xl font-semibold">{metrics.totalSprayVolumeL.toFixed(0)} L</p>
+                    <p className="text-xl font-semibold">{metrics.totalSprayVolumeL} L</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Tanks Required</p>
@@ -372,44 +307,12 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
         </div>
       </div>
 
-      <ScheduleDialog
+      <DeleteApplicationDialog
         applicationId={application.id}
-        open={scheduleDialogOpen}
-        onOpenChange={setScheduleDialogOpen}
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        redirectAfterDelete="/dashboard"
       />
-
-      <CompleteDialog
-        applicationId={application.id}
-        open={completeDialogOpen}
-        onOpenChange={setCompleteDialogOpen}
-      />
-
-      <AlertDialog open={revertDialogOpen} onOpenChange={setRevertDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Revert Status</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to revert this application to {getRevertTargetStatus()}?
-              {application.status === ApplicationStatus.COMPLETED &&
-                " This will clear the completion details."}
-              {application.status === ApplicationStatus.SCHEDULED &&
-                " This will clear the scheduled date."}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isReverting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                void handleRevert();
-              }}
-              disabled={isReverting}
-            >
-              {isReverting ? "Reverting..." : "Revert"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }

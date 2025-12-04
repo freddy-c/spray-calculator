@@ -439,7 +439,12 @@ export async function scheduleApplication(
       where: { id },
       data: {
         status: ApplicationStatus.SCHEDULED,
-        scheduledDate: data.scheduledDate,
+        scheduledDate: new Date(data.scheduledDate),
+        // Clear completion details if transitioning from COMPLETED
+        completedDate: null,
+        operator: null,
+        weatherConditions: null,
+        notes: null,
       },
     });
 
@@ -484,7 +489,7 @@ export async function completeApplication(
       where: { id },
       data: {
         status: ApplicationStatus.COMPLETED,
-        completedDate: data.completedDate,
+        completedDate: new Date(data.completedDate),
         operator: data.operator,
         weatherConditions: data.weatherConditions,
         notes: data.notes,
@@ -532,6 +537,11 @@ export async function revertToDraft(
       data: {
         status: ApplicationStatus.DRAFT,
         scheduledDate: null,
+        // Clear completion details if reverting from COMPLETED
+        completedDate: null,
+        operator: null,
+        weatherConditions: null,
+        notes: null,
       },
     });
 
