@@ -1,7 +1,8 @@
 "use client"
 
-import { SignupForm, type SignupFormValues } from "@/components/auth/signup-form"
-import { signUp } from "@/lib/auth-client"
+import { SignupForm } from "@/components/features/auth"
+import { signUp } from "@/lib/core/auth/client"
+import { type SignupInput } from "@/lib/core/auth"
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 
@@ -10,7 +11,7 @@ export default function SignUpPage() {
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleSubmit = async (data: SignupFormValues) => {
+  const handleSubmit = async (data: SignupInput) => {
     setError(null)
     setIsLoading(true)
 

@@ -1,58 +1,71 @@
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/core/auth/server";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { SignOutButton } from "./sign-out-button";
 import Link from "next/link";
-import { getApplications } from "@/lib/actions/application";
-import { ApplicationList } from "./application-list";
+import { getApplications } from "@/lib/domain/application/actions";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { IconClipboardList, IconPlus } from "@tabler/icons-react";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "@/components/ui/empty";
+import { ApplicationsTable } from "./applications-table";
 
 export default async function DashboardPage() {
     const session = await auth.api.getSession({
         headers: await headers()
     })
 
-    if(!session) {
+    if (!session) {
         redirect("/sign-in")
     }
 
     const result = await getApplications();
     const applications = result.success ? result.data : [];
+    // const applications = [];
 
     return (
-        <div className="container mx-auto py-10 px-4">
-            <div className="flex justify-between items-center mb-8">
-                <div>
-                    <h1 className="text-3xl font-bold">Dashboard</h1>
-                    <p className="text-muted-foreground mt-1">Welcome back, {session.user.name}</p>
-                </div>
-                <div className="flex gap-2">
-                    <Link href="/applications/new">
-                        <Button>New Application</Button>
-                    </Link>
-                    <SignOutButton />
-                </div>
-            </div>
-
-            {applications.length === 0 ? (
-                <div className="text-center py-12 border rounded-lg bg-muted/50">
-                    <h2 className="text-xl font-semibold mb-2">No applications yet</h2>
-                    <p className="text-muted-foreground mb-4">
-                        Create your first spray application to get started.
-                    </p>
-                    <Link href="/applications/new">
-                        <Button>Create Application</Button>
-                    </Link>
-                </div>
+        <div>
+            {applications.length > 0 ? (
+                <div className="space-y-4">
+                    <Tabs defaultValue="all">
+                        <div className="flex">
+                            <TabsList>
+                                <TabsTrigger value="all">All</TabsTrigger>
+                                <TabsTrigger value="Draft">Draft</TabsTrigger>
+                                <TabsTrigger value="Scheduled">Scheduled</TabsTrigger>
+                                <TabsTrigger value="Completed">Completed</TabsTrigger>
+                            </TabsList>
+                            <div className="ml-auto">
+                                <Button variant="outline" size="sm" >
+                                    <IconPlus />
+                                    <Link href="/dashboard/applications/new" className="hidden lg:inline">New Application</Link>
+                                </Button>
+                            </div>
+                        </div>
+                        <TabsContent value="all" className="overflow-hidden rounded-lg border">
+                            <ApplicationsTable applications={applications} />
+                        </TabsContent>
+                    </Tabs>
+                </div >
             ) : (
-                <ApplicationList applications={applications} />
-            )}
-
-            <div className="mt-8 pt-8 border-t">
-                <Link href="/delete-account" className="text-sm text-muted-foreground hover:underline">
-                    Delete Account
-                </Link>
-            </div>
-        </div>
+                <div className="w-full flex-1 rounded-lg border border-dashed">
+                    <Empty>
+                        <EmptyHeader>
+                            <EmptyMedia variant="icon">
+                                <IconClipboardList />
+                            </EmptyMedia>
+                            <EmptyTitle>No applications yet</EmptyTitle>
+                            <EmptyDescription>Create your first spray application to get started.</EmptyDescription>
+                        </EmptyHeader>
+                        <EmptyContent>
+                            <Button variant="outline" size="sm" >
+                                <IconPlus />
+                                <Link href="/dashboard/applications/new" className="hidden lg:inline">New Application</Link>
+                            </Button>
+                        </EmptyContent>
+                    </Empty>
+                </div>
+            )
+            }
+        </div >
     )
 }
