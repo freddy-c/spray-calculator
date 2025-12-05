@@ -18,14 +18,14 @@ export const mockSessionResponse = {
 // Mock auth object that matches better-auth's structure
 export const mockAuth = {
   api: {
-    getSession: vi.fn(async () => mockSessionResponse),
+    getSession: vi.fn(async (_context): Promise<typeof mockSessionResponse | null> => mockSessionResponse),
   },
 }
 
 // Mock for unauthenticated state
 export const mockNoSession = {
   api: {
-    getSession: vi.fn(async () => null),
+    getSession: vi.fn(async (_context) => null),
   },
 }
 

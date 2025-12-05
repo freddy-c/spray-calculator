@@ -144,7 +144,6 @@ export async function createApplication(
     revalidatePath("/dashboard");
     return { success: true, data: { id: application.id } };
   } catch (error) {
-    console.error("Error creating application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create application",
@@ -188,7 +187,6 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
 
     return { success: true, data: applicationsWithTotalArea };
   } catch (error) {
-    console.error("Error fetching applications:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch applications",
@@ -263,7 +261,6 @@ export async function getApplication(
       },
     };
   } catch (error) {
-    console.error("Error fetching application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch application",
@@ -361,7 +358,6 @@ export async function updateApplication(
     revalidatePath(`/applications/${id}/edit`);
     return { success: true, data: { id } };
   } catch (error) {
-    console.error("Error updating application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to update application",
@@ -403,7 +399,6 @@ export async function deleteApplication(
     revalidatePath("/dashboard");
     return { success: true, data: undefined };
   } catch (error) {
-    console.error("Error deleting application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to delete application",
@@ -453,7 +448,6 @@ export async function scheduleApplication(
     revalidatePath(`/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
-    console.error("Error scheduling application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to schedule application",
@@ -501,7 +495,6 @@ export async function completeApplication(
     revalidatePath(`/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
-    console.error("Error completing application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to complete application",
@@ -550,7 +543,6 @@ export async function revertToDraft(
     revalidatePath(`/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
-    console.error("Error reverting application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to revert application",
@@ -601,7 +593,6 @@ export async function revertToScheduled(
     revalidatePath(`/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
-    console.error("Error reverting application:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to revert application",
@@ -684,7 +675,6 @@ export async function getApplicationDetail(
       },
     };
   } catch (error) {
-    console.error("Error fetching application detail:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch application detail",
