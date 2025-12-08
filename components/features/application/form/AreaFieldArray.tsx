@@ -2,16 +2,16 @@
 
 import { Controller, type Control, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import { X } from "lucide-react";
-import { areaTypeOptions, type CreateApplicationInput, type CreateApplicationOutput } from "@/lib/domain/application";
+import { areaTypeOptions, type CreateApplicationInput } from "@/lib/domain/application";
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
 type AreaFieldArrayProps = {
-  control: Control<CreateApplicationInput, any, CreateApplicationOutput>;
+  control: Control<CreateApplicationInput>;
   fields: FieldArrayWithId<CreateApplicationInput, "areas", "id">[];
-  append: (value: CreateApplicationOutput["areas"][number]) => void;
+  append: (value: CreateApplicationInput["areas"][number]) => void;
   remove: (index: number) => void;
   errors: FieldErrors<CreateApplicationInput>;
 };
@@ -95,6 +95,7 @@ export function AreaFieldArray({ control, fields, append, remove, errors }: Area
                     id={`input-areas-${index}-sizeHa`}
                     placeholder="0.5"
                     aria-invalid={fieldState.invalid}
+                    value={(controllerField.value ?? "") as string | number}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

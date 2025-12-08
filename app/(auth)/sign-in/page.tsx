@@ -17,10 +17,10 @@ function SignInContent() {
     searchParams.get("reset") === "success"
       ? "Password reset successful! You can now sign in with your new password."
       : searchParams.get("verified") === "true"
-      ? "Email verified successfully! You can now sign in to your account."
-      : searchParams.get("deleted") === "true"
-      ? "Your account has been successfully deleted."
-      : null
+        ? "Email verified successfully! You can now sign in to your account."
+        : searchParams.get("deleted") === "true"
+          ? "Your account has been successfully deleted."
+          : null
 
   // Derive error message directly from URL params
   const urlError =
@@ -36,12 +36,9 @@ function SignInContent() {
       {
         email: data.email,
         password: data.password,
-        callbackURL: "/sign-in",
+        callbackURL: "/dashboard",
       },
       {
-        onSuccess: () => {
-          router.push("/dashboard")
-        },
         onError: (ctx) => {
           // Unverified email case – Better Auth returns 403 for this
           if (ctx.error.status === 403) {

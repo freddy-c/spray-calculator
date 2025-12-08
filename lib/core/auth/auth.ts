@@ -28,12 +28,12 @@ export const auth = betterAuth({
             userName: user.name
           }),
         })
-
+        
         if (error) {
           console.error('Failed to send password reset email:', error)
           throw error
         }
-
+        
         console.log(`Password reset email sent to ${user.email}`)
       } catch (error) {
         console.error('Failed to send password reset email:', error)
@@ -67,6 +67,9 @@ export const auth = betterAuth({
     },
     sendOnSignIn: true,
     sendOnSignUp: true,
+  },
+  advanced: {
+    useSecureCookies: false,
   },
   trustedOrigins: [
     "https://refactored-goldfish-54rxxwvx544c79p5-3000.app.github.dev",

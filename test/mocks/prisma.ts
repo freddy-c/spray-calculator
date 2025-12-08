@@ -4,7 +4,7 @@
  * Uses vitest-mock-extended to create a deep mock of the Prisma client
  */
 
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from '@/app/generated/prisma/client'
 import { beforeEach } from 'vitest'
 import { mockDeep, mockReset, DeepMockProxy } from 'vitest-mock-extended'
 

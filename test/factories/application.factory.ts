@@ -3,7 +3,7 @@
  * These match the Prisma Application, ApplicationArea, and ApplicationProduct models
  */
 
-import { ApplicationStatus } from '@prisma/client'
+import { ApplicationStatus } from '@/lib/domain/application/types'
 
 export const createMockApplication = (overrides: Record<string, any> = {}) => ({
   id: 'cmiogvhgo0003fs4pi0dol119',

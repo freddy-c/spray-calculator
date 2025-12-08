@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { calculateSprayMetrics, createApplicationSchema, type CreateApplicationInput, type CreateApplicationOutput, type SprayMetrics } from "@/lib/domain/application";
@@ -8,19 +8,12 @@ import { useRouter, usePathname } from "next/navigation";
 
 
 
-type UseApplicationFormProps =
-  | {
-    mode?: "create";
-    initialValues?: Partial<CreateApplicationOutput>;
-    applicationId?: string;
-    onSuccess?: () => void;
-  }
-  | {
-    mode: "edit";
-    initialValues: Partial<CreateApplicationOutput>;
-    applicationId: string;
-    onSuccess?: () => void;
-  };
+type UseApplicationFormProps = {
+  mode?: "create" | "edit";
+  initialValues?: Partial<CreateApplicationOutput>;
+  applicationId?: string;
+  onSuccess?: () => void;
+};
 
 const defaultFormValues: CreateApplicationOutput = {
   name: "",
@@ -46,7 +39,7 @@ export function useApplicationForm(props?: UseApplicationFormProps) {
   const router = useRouter();
   const pathname = usePathname();
 
-  const form = useForm<CreateApplicationInput, any, CreateApplicationOutput>({
+  const form = useForm({
     resolver: zodResolver(createApplicationSchema),
     defaultValues: {
       ...defaultFormValues,

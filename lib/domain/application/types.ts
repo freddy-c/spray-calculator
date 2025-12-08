@@ -1,5 +1,5 @@
 import type { Application, ApplicationArea } from "@/app/generated/prisma/client";
-import type { ApplicationProductField } from "@/lib/domain/product/types";
+import type { ApplicationProductField, ProductType } from "@/lib/domain/product/types";
 
 /**
  * Re-export Prisma types for convenience (server-side only)
@@ -48,6 +48,7 @@ export type ApplicationListItem = Pick<
   "id" | "name" | "status" | "scheduledDate" | "completedDate" | "createdAt" | "updatedAt"
 > & {
   totalAreaHa: number;
+  formattedUpdatedAt: string;
 };
 
 /**
@@ -121,7 +122,7 @@ export type SprayMetrics = {
   productTotals: Array<{
     productId: string;
     productName: string;
-    productType: string;
+    productType: ProductType;
     ratePerHa: number;
     totalAmount: number;
     unit: string;

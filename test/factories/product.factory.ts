@@ -3,7 +3,7 @@
  * These match the Prisma Product model
  */
 
-import { ProductType } from '@prisma/client'
+import { ProductType } from '@/lib/domain/product/types'
 
 export const createMockProduct = (overrides: Record<string, any> = {}) => ({
   id: 'cmino1fmf00004r4pydqq3zce',

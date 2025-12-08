@@ -173,7 +173,7 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
       },
     });
 
-    // Calculate total area for each application
+    // Calculate total area for each application and format dates
     const applicationsWithTotalArea = applications.map((app) => ({
       id: app.id,
       name: app.name,
@@ -183,6 +183,14 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,
       totalAreaHa: app.areas.reduce((sum, area) => sum + area.sizeHa, 0),
+      formattedUpdatedAt: new Intl.DateTimeFormat("en-US", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        hourCycle: "h23",
+      }).format(app.updatedAt),
     }));
 
     return { success: true, data: applicationsWithTotalArea };
