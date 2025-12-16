@@ -225,19 +225,19 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle</p>
-                    <p className="text-xl font-semibold">{nozzle.label}</p>
+                    <p className="text-l font-semibold">{nozzle.label}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Spacing</p>
-                    <p className="text-xl font-semibold">{application.nozzleSpacingM} m</p>
+                    <p className="text-l font-semibold">{application.nozzleSpacingM} m</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Count</p>
-                    <p className="text-xl font-semibold">{application.nozzleCount}</p>
+                    <p className="text-l font-semibold">{application.nozzleCount}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Tank Size</p>
-                    <p className="text-xl font-semibold">{application.tankSizeL} L</p>
+                    <p className="text-l font-semibold">{application.tankSizeL} L</p>
                   </div>
                 </div>
               </div>
@@ -248,17 +248,17 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Speed</p>
-                    <p className="text-xl font-semibold">{application.speedKmH} km/h</p>
+                    <p className="text-l font-semibold">{application.speedKmH} km/h</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Pressure</p>
-                    <p className={`text-xl font-semibold ${metrics.pressureStatus === "ok" ? "text-emerald-700" : "text-destructive"}`}>
+                    <p className={`text-l font-semibold ${metrics.pressureStatus === "ok" ? "text-emerald-700" : "text-destructive"}`}>
                       {metrics.requiredPressureBar.toFixed(2)} bar
                     </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Flow</p>
-                    <p className="text-xl font-semibold">{metrics.flowPerNozzleLMin.toFixed(2)} L/min</p>
+                    <p className="text-l font-semibold">{metrics.flowPerNozzleLMin.toFixed(2)} L/min</p>
                   </div>
                 </div>
               </div>
@@ -269,19 +269,19 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Spray Volume</p>
-                    <p className="text-xl font-semibold">{application.sprayVolumeLHa} L/ha</p>
+                    <p className="text-l font-semibold">{application.sprayVolumeLHa} L/ha</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Total Spray Volume</p>
-                    <p className="text-xl font-semibold">{metrics.totalSprayVolumeL} L</p>
+                    <p className="text-l font-semibold">{metrics.totalSprayVolumeL} L</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Tanks Required</p>
-                    <p className="text-xl font-semibold">{metrics.tanksRequired.toFixed(2)}</p>
+                    <p className="text-l font-semibold">{metrics.tanksRequired.toFixed(2)}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Spray Time</p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-l font-semibold">
                       {(() => {
                         const totalMinutes = Math.round(metrics.sprayTimeMinutes);
                         const hours = Math.floor(totalMinutes / 60);

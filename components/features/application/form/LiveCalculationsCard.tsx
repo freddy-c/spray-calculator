@@ -34,7 +34,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 <p>The nozzle output for one nozzle</p>
               </TooltipContent>
             </Tooltip>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? metrics.flowPerNozzleLMin.toFixed(2) : "—"} L/min
             </p>
           </div>
@@ -51,7 +51,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
               </TooltipContent>
             </Tooltip>
             <p
-              className={`text-xl font-semibold ${metrics?.pressureStatus === "ok"
+              className={`text-l font-semibold ${metrics?.pressureStatus === "ok"
                 ? "text-emerald-700"
                 : "text-destructive"
                 }`}
@@ -62,7 +62,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
 
           <div className="rounded-md border p-3">
             <p className="text-sm text-muted-foreground">Speed</p>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? metrics.speedKmH.toFixed(2) : "—"} km/h
             </p>
           </div>
@@ -79,7 +79,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 <p>Sum of all areas receiving this application.</p>
               </TooltipContent>
             </Tooltip>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? metrics.totalAreaHa.toFixed(3) : "—"} ha
             </p>
           </div>
@@ -93,7 +93,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 <p>Total liquid required at {sprayVolumeLHa} L/ha.</p>
               </TooltipContent>
             </Tooltip>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? metrics.totalSprayVolumeL.toFixed(2) : "—"} L
             </p>
           </div>
@@ -107,7 +107,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 <p>Number of full tanks to cover the total area.</p>
               </TooltipContent>
             </Tooltip>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? metrics.tanksRequired.toFixed(2) : "—"}
             </p>
           </div>
@@ -124,7 +124,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
                 <p>Estimated time to spray the entire area in a single pass without stopping. Actual time will be higher due to turns, fills, and overlaps.</p>
               </TooltipContent>
             </Tooltip>
-            <p className="text-xl font-semibold">
+            <p className="text-l font-semibold">
               {metrics ? (() => {
                 const totalMinutes = Math.round(metrics.sprayTimeMinutes);
                 const hours = Math.floor(totalMinutes / 60);

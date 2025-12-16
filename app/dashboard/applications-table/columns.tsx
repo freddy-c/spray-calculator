@@ -87,7 +87,7 @@ export const columns: ColumnDef<ApplicationListItem>[] = [
     id: "actions",
     cell: ({ row, table }) => {
       const application = row.original;
-      const meta = table.options.meta as { onDelete: (id: string) => void } | undefined;
+      const onDelete = (table.options.meta as { onDelete?: (id: string) => void })?.onDelete;
 
       return (
         <DropdownMenu>
@@ -111,7 +111,7 @@ export const columns: ColumnDef<ApplicationListItem>[] = [
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => meta?.onDelete(application.id)}
+              onClick={() => onDelete?.(application.id)}
               className="text-destructive focus:text-destructive"
             >
               Delete
