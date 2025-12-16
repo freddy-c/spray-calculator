@@ -152,26 +152,50 @@ export async function createApplication(
 }
 
 /**
- * Get all applications for the current user
+ * Get all applications for the current user (with pagination and filtering)
  */
-export async function getApplications(): Promise<ActionResult<ApplicationListItem[]>> {
+export async function getApplications(params?: {
+  page?: number;
+  pageSize?: number;
+  status?: ApplicationStatus | "all";
+}): Promise<ActionResult<{
+  data: ApplicationListItem[];
+  pageCount: number;
+  totalCount: number;
+}>> {
   try {
     const session = await getSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const applications = await prisma.application.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        areas: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const page = params?.page ?? 0;
+    const pageSize = params?.pageSize ?? 10;
+    const status = params?.status ?? "all";
+
+    // Build where clause
+    const where = {
+      userId: session.user.id,
+      ...(status !== "all" && { status }),
+    };
+
+    // Execute count and findMany in a transaction for consistency
+    const [totalCount, applications] = await prisma.$transaction([
+      prisma.application.count({ where }),
+      prisma.application.findMany({
+        where,
+        include: {
+          areas: true,
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: page * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    const pageCount = Math.ceil(totalCount / pageSize);
 
     // Calculate total area for each application and format dates
     const applicationsWithTotalArea = applications.map((app) => ({
@@ -193,7 +217,14 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
       }).format(app.updatedAt),
     }));
 
-    return { success: true, data: applicationsWithTotalArea };
+    return {
+      success: true,
+      data: {
+        data: applicationsWithTotalArea,
+        pageCount,
+        totalCount,
+      }
+    };
   } catch (error) {
     return {
       success: false,
