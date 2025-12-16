@@ -1,9 +1,9 @@
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
-import type { FormValues, PressureStatus, SprayMetrics } from "./types";
+import type { CreateApplicationOutput, PressureStatus, SprayMetrics } from "./types";
 import type { ProductTotal } from "@/lib/domain/product/types";
 import { PRODUCT_TYPE_TOTAL_UNITS } from "@/lib/domain/product/types";
 
-export function calculateSprayMetrics(values: FormValues): SprayMetrics {
+export function calculateSprayMetrics(values: CreateApplicationOutput): SprayMetrics {
   const sprayVolume = values.sprayVolumeLHa;
   const nozzleSpacing = values.nozzleSpacingM;
   const speedKmH = values.speedKmH;

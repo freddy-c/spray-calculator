@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Controller, type Control, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
 import { X } from "lucide-react";
-import { type CreateApplicationInput, type CreateApplicationOutput } from "@/lib/domain/application";
+import { type CreateApplicationInput } from "@/lib/domain/application";
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -12,9 +12,9 @@ import { PRODUCT_TYPE_LABELS, PRODUCT_TYPE_UNITS, type ProductCatalogItem } from
 import { ProductCatalogDialog } from "./ProductCatalogDialog";
 
 type ProductFieldArrayProps = {
-  control: Control<CreateApplicationInput, any, CreateApplicationOutput>;
+  control: Control<CreateApplicationInput>;
   fields: FieldArrayWithId<CreateApplicationInput, "products", "id">[];
-  append: (value: CreateApplicationOutput["products"][number]) => void;
+  append: (value: CreateApplicationInput["products"][number]) => void;
   remove: (index: number) => void;
   errors: FieldErrors<CreateApplicationInput>;
 };
@@ -68,6 +68,7 @@ export function ProductFieldArray({ control, fields, append, remove, errors }: P
                     id={`input-products-${index}-ratePerHa`}
                     placeholder="0.00"
                     aria-invalid={fieldState.invalid}
+                    value={(controllerField.value ?? "") as string | number}
                   />
                   {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                 </Field>

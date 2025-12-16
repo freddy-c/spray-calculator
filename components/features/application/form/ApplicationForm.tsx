@@ -112,6 +112,7 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                         aria-invalid={fieldState.invalid}
                         placeholder="300"
                         {...field}
+                        value={(field.value ?? "") as string | number}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
@@ -176,6 +177,7 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                         placeholder="0.5"
                         step={0.1}
                         {...field}
+                        value={(field.value ?? "") as string | number}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
@@ -200,6 +202,7 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                         placeholder="40"
                         step={1}
                         {...field}
+                        value={(field.value ?? "") as string | number}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
@@ -222,6 +225,7 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                         placeholder="400"
                         step={10}
                         {...field}
+                        value={(field.value ?? "") as string | number}
                       />
                       {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
                     </Field>
@@ -232,23 +236,30 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                 <Controller
                   name="speedKmH"
                   control={control}
-                  render={({ field, fieldState }) => (
-                    <Field data-invalid={fieldState.invalid}>
-                      <FieldLabel htmlFor="input-speedKmH">
-                        Speed (km/h)
-                      </FieldLabel>
-                      <FieldDescription>Drag to match your driving speed. Current: {field.value.toFixed(1)} km/h</FieldDescription>
-                      <Slider
-                        id="input-speedKmH"
-                        min={3}
-                        max={12}
-                        step={0.1}
-                        value={[field.value]}
-                        onValueChange={(value) => field.onChange(value[0])}
-                      />
-                      {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                    </Field>
-                  )}
+                  render={({ field, fieldState }) => {
+                    const numericValue =
+                      typeof field.value === "number"
+                        ? field.value
+                        : Number(field.value ?? 0) || 0;
+
+                    return (
+                      <Field data-invalid={fieldState.invalid}>
+                        <FieldLabel htmlFor="input-speedKmH">
+                          Speed (km/h)
+                        </FieldLabel>
+                        <FieldDescription>Drag to match your driving speed. Current: {numericValue.toFixed(1)} km/h</FieldDescription>
+                        <Slider
+                          id="input-speedKmH"
+                          min={3}
+                          max={12}
+                          step={0.1}
+                          value={[numericValue]}
+                          onValueChange={(value) => field.onChange(value[0])}
+                        />
+                        {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                      </Field>
+                    )
+                  }}
                 />
               </FieldGroup>
             </form>

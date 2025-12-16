@@ -50,7 +50,6 @@ export async function getProducts(): Promise<ActionResult<ProductCatalogItem[]>>
 
     return { success: true, data: products };
   } catch (error) {
-    console.error("Error fetching products:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to fetch products",
@@ -84,7 +83,6 @@ export async function createCustomProduct(
 
     return { success: true, data: product };
   } catch (error) {
-    console.error("Error creating product:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to create product",

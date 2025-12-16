@@ -81,6 +81,11 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
 
   return (
     <div className="space-y-6">
+      {/* Application Name */}
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">{application.name}</h1>
+      </div>
+
       {/* Header with Status and Actions */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b">
         <div className="flex items-center gap-3">

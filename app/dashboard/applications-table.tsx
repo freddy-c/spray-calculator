@@ -125,14 +125,7 @@ export function ApplicationsTable({ applications }: ApplicationsTableProps) {
                 </TableCell>
                 <TableCell>{application.totalAreaHa}</TableCell>
                 <TableCell>
-                  {new Intl.DateTimeFormat("en-US", {
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                    hourCycle: "h23",
-                  }).format(new Date(application.updatedAt))}
+                  {application.formattedUpdatedAt}
                 </TableCell>
                 <TableCell>
                   <DropdownMenu>
