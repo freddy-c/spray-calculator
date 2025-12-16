@@ -90,8 +90,8 @@ test.describe('Application Status Changes', () => {
       await expect(page.getByRole('dialog', { name: 'Schedule Application' })).toBeVisible()
 
       // Change the scheduled date
-      const nextWeek = new Date()
-      nextWeek.setDate(nextWeek.getDate() + 7)
+      const nextWeek = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+      
       const dateString = nextWeek.toISOString().split('T')[0]
 
       await page.getByLabel('Scheduled Date').fill(dateString)
