@@ -20,8 +20,8 @@ const authFile = 'playwright/.auth/user.json'
 
 // Test user credentials
 // TODO: Replace with your actual test user credentials or use environment variables
-const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'freddyfcunningham@gmail.com'
-const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || 'wF#z&DtmzTK9hQlE'
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'test@example.com'
+const TEST_USER_PASSWORD = process.env.TEST_USER_PASSWORD || 'password123'
 
 setup('authenticate', async ({ page }) => {
   await page.goto('/sign-in');
