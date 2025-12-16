@@ -2,7 +2,7 @@ import { Client } from 'pg'
 import { createId } from '@paralleldrive/cuid2'
 
 const DATABASE_URL = process.env.DATABASE_URL!
-const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'freddyfcunningham@gmail.com'
+const TEST_USER_EMAIL = process.env.TEST_USER_EMAIL || 'test@example.com'
 
 /**
  * Get the test user's ID from the database.
