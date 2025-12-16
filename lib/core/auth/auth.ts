@@ -69,7 +69,7 @@ export const auth = betterAuth({
     sendOnSignUp: true,
   },
   advanced: {
-    useSecureCookies: false,
+    useSecureCookies: process.env.NODE_ENV === 'production',
   },
   trustedOrigins: [
     "https://refactored-goldfish-54rxxwvx544c79p5-3000.app.github.dev",
