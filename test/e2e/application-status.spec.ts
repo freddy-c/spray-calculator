@@ -52,8 +52,7 @@ test.describe('Application Status Changes', () => {
       await expect(page.getByText('Set when this application will be performed.')).toBeVisible()
 
       // Fill in the scheduled date (7 days from now)
-      const scheduledDate = new Date()
-      scheduledDate.setDate(scheduledDate.getDate() + 7)
+      const scheduledDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
       const dateString = scheduledDate.toISOString().split('T')[0]
 
       await page.getByLabel('Scheduled Date').fill(dateString)
