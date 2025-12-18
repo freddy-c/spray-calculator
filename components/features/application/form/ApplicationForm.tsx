@@ -14,6 +14,7 @@ import { AreaFieldArray } from "./AreaFieldArray";
 import { ProductFieldArray } from "./ProductFieldArray";
 import { LiveCalculationsCard } from "./LiveCalculationsCard";
 import type { CreateApplicationOutput } from "@/lib/domain/application/types";
+import type { AreaListItem } from "@/lib/domain/area";
 import { ArrowLeft } from "lucide-react";
 
 type ApplicationFormProps = {
@@ -21,15 +22,17 @@ type ApplicationFormProps = {
   initialValues?: Partial<CreateApplicationOutput>;
   applicationId?: string;
   onSuccess?: () => void;
+  availableAreas: AreaListItem[];
 };
 
-export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess }: ApplicationFormProps) {
+export function ApplicationForm({ mode = "create", initialValues, applicationId, onSuccess, availableAreas }: ApplicationFormProps) {
   const router = useRouter();
   const { form, control, areaFields, appendArea, removeArea, productFields, appendProduct, removeProduct, metrics, isSubmitting, onSubmit } = useApplicationForm({
     mode,
     initialValues,
     applicationId,
     onSuccess,
+    availableAreas,
   });
 
   const watchedSprayVolume = form.watch("sprayVolumeLHa");
@@ -82,7 +85,7 @@ export function ApplicationForm({ mode = "create", initialValues, applicationId,
                   fields={areaFields}
                   append={appendArea}
                   remove={removeArea}
-                  errors={form.formState.errors}
+                  availableAreas={availableAreas}
                 />
 
                 <FieldSeparator>Products</FieldSeparator>

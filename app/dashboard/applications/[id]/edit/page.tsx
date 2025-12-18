@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { auth } from "@/lib/core/auth/server";
 import { getApplication } from "@/lib/domain/application/actions";
 import { ApplicationForm } from "@/components/features/application/form";
+import { getAreas } from "@/lib/domain/area";
 
 type PageProps = {
   params: Promise<{
@@ -27,11 +28,21 @@ export default async function EditApplicationPage({ params }: PageProps) {
     notFound();
   }
 
+  const areasResult = await getAreas();
+  const availableAreas = areasResult.success ? areasResult.data : [];
+
+  // Transform areas from AreaWithDetails[] to { areaId: string }[] for the form
+  const transformedData = {
+    ...result.data,
+    areas: result.data.areas.map((area) => ({ areaId: area.id })),
+  };
+
   return (
     <ApplicationForm
       mode="edit"
       applicationId={id}
-      initialValues={result.data}
+      initialValues={transformedData}
+      availableAreas={availableAreas}
     />
   );
 }

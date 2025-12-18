@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
 import { useApplicationForm } from '../useApplicationForm'
 import { toast } from 'sonner'
+import type { AreaListItem } from '@/lib/domain/area'
 
 // Mock dependencies
 vi.mock('@/lib/domain/application/actions', () => ({
@@ -25,6 +26,12 @@ vi.mock('next/navigation', () => ({
 
 import { createApplication, updateApplication } from '@/lib/domain/application/actions'
 
+// Mock area data
+const mockAvailableAreas: AreaListItem[] = [
+  { id: 'area-1', name: 'Greens', type: 'GREEN', sizeHa: 1, createdAt: new Date(), updatedAt: new Date() },
+  { id: 'area-2', name: 'Tee Box 1', type: 'TEE', sizeHa: 0.5, createdAt: new Date(), updatedAt: new Date() },
+]
+
 describe('useApplicationForm', () => {
   beforeEach(() => {
     vi.clearAllMocks()
@@ -32,7 +39,7 @@ describe('useApplicationForm', () => {
 
   describe('initialization', () => {
     it('should initialize with default values in create mode', () => {
-      const { result } = renderHook(() => useApplicationForm())
+      const { result } = renderHook(() => useApplicationForm({ availableAreas: mockAvailableAreas }))
 
       expect(result.current.form.getValues()).toMatchObject({
         name: '',
@@ -42,13 +49,7 @@ describe('useApplicationForm', () => {
         nozzleCount: 40,
         tankSizeL: 400,
         speedKmH: 5,
-        areas: [
-          {
-            label: 'Greens',
-            type: 'green',
-            sizeHa: 1,
-          },
-        ],
+        areas: [],
         products: [],
       })
     })
@@ -60,6 +61,7 @@ describe('useApplicationForm', () => {
             name: 'Custom Application',
             sprayVolumeLHa: 400,
           },
+          availableAreas: mockAvailableAreas,
         })
       )
 
@@ -76,6 +78,7 @@ describe('useApplicationForm', () => {
           initialValues: {
             name: 'Existing Application',
           },
+          availableAreas: mockAvailableAreas,
         })
       )
 
@@ -85,54 +88,51 @@ describe('useApplicationForm', () => {
 
   describe('area field array operations', () => {
     it('should add new area to field array', () => {
-      const { result } = renderHook(() => useApplicationForm())
+      const { result } = renderHook(() => useApplicationForm({ availableAreas: mockAvailableAreas }))
 
       act(() => {
         result.current.appendArea({
-          label: 'Tee Box 1',
-          type: 'tee',
-          sizeHa: 0.5,
+          areaId: 'area-2',
         })
       })
 
-      expect(result.current.areaFields).toHaveLength(2)
-      expect(result.current.form.getValues().areas[1]).toMatchObject({
-        label: 'Tee Box 1',
-        type: 'tee',
-        sizeHa: 0.5,
+      expect(result.current.areaFields).toHaveLength(1)
+      expect(result.current.form.getValues().areas[0]).toMatchObject({
+        areaId: 'area-2',
       })
     })
 
     it('should remove area from field array', () => {
-      const { result } = renderHook(() => useApplicationForm())
+      const { result } = renderHook(() => useApplicationForm({ availableAreas: mockAvailableAreas }))
 
       act(() => {
         result.current.appendArea({
-          label: 'Tee Box 1',
-          type: 'tee',
-          sizeHa: 0.5,
+          areaId: 'area-1',
         })
       })
 
-      expect(result.current.areaFields).toHaveLength(2)
+      expect(result.current.areaFields).toHaveLength(1)
 
       act(() => {
-        result.current.removeArea(1)
+        result.current.removeArea(0)
       })
 
-      expect(result.current.areaFields).toHaveLength(1)
+      expect(result.current.areaFields).toHaveLength(0)
     })
 
     it('should preserve existing areas when adding new one', () => {
-      const { result } = renderHook(() => useApplicationForm())
+      const { result } = renderHook(() => useApplicationForm({
+        availableAreas: mockAvailableAreas,
+        initialValues: {
+          areas: [{ areaId: 'area-1' }]
+        }
+      }))
 
       const firstArea = result.current.form.getValues().areas[0]
 
       act(() => {
         result.current.appendArea({
-          label: 'Fairway 1',
-          type: 'fairway',
-          sizeHa: 2,
+          areaId: 'area-2',
         })
       })
 

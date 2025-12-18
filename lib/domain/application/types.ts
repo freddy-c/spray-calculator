@@ -19,24 +19,12 @@ export const ApplicationStatus = {
 export type ApplicationStatus = (typeof ApplicationStatus)[keyof typeof ApplicationStatus];
 
 /**
- * Area type options
+ * Area with details - used in application display
  */
-export const areaTypeOptions = [
-  { value: "green", label: "Green" },
-  { value: "tee", label: "Tee" },
-  { value: "fairway", label: "Fairway" },
-  { value: "rough", label: "Rough" },
-  { value: "other", label: "Other" },
-] as const;
-
-export type AreaType = (typeof areaTypeOptions)[number]["value"];
-
-/**
- * Area object used in forms and calculations
- */
-export type Area = {
-  label: string;
-  type: AreaType;
+export type AreaWithDetails = {
+  id: string;
+  name: string;
+  type: string;
   sizeHa: number;
 };
 
@@ -59,7 +47,7 @@ export type ApplicationWithAreas = Pick<
   "id" | "name" | "nozzleId" | "sprayVolumeLHa" | "nozzleSpacingM" |
   "nozzleCount" | "tankSizeL" | "speedKmH"
 > & {
-  areas: Area[];
+  areas: AreaWithDetails[];
   products: ApplicationProductField[];
 };
 
@@ -85,7 +73,7 @@ export type ApplicationDetail = Pick<
   | "createdAt"
   | "updatedAt"
 > & {
-  areas: Area[];
+  areas: AreaWithDetails[];
   products: ApplicationProductField[];
 };
 

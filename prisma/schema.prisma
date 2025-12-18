@@ -24,6 +24,18 @@ enum ApplicationStatus {
   COMPLETED
 }
 
+enum AreaType {
+  GREEN
+  TEE
+  FAIRWAY
+  ROUGH
+  FIRST_CUT
+  APRON
+  COLLAR
+  PATH
+  OTHER
+}
+
 model User {
   id            String        @id
   name          String
@@ -36,6 +48,7 @@ model User {
   accounts      Account[]
   applications  Application[]
   products      Product[]
+  areas         Area[]
 
   @@unique([email])
   @@map("user")
@@ -121,12 +134,13 @@ model ApplicationArea {
   id            String      @id @default(cuid())
   applicationId String
   application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
-  label         String
-  type          String
-  sizeHa        Float
+  areaId        String
+  area          Area        @relation(fields: [areaId], references: [id], onDelete: Restrict)
   order         Int         @default(0)
 
+  @@unique([applicationId, areaId])
   @@index([applicationId])
+  @@index([areaId])
   @@map("application_area")
 }
 
@@ -160,4 +174,19 @@ model ApplicationProduct {
   @@index([applicationId])
   @@index([productId])
   @@map("application_product")
+}
+
+model Area {
+  id               String            @id @default(cuid())
+  name             String
+  type             AreaType
+  sizeHa           Float
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  applicationAreas ApplicationArea[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  @@index([userId])
+  @@map("area")
 }

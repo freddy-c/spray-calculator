@@ -5,76 +5,33 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  type ColumnDef,
 } from "@tanstack/react-table";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { toast } from "sonner";
-import { deleteApplication } from "@/lib/domain/application/actions";
-import type { ApplicationListItem } from "@/lib/domain/application/types";
-import { columns } from "./columns";
 
-type ApplicationsTableProps = {
-  applications: ApplicationListItem[];
+type DataTableProps<T> = {
+  items: T[];
+  columns: ColumnDef<T, any>[];
   pageCount: number;
   pageIndex: number;
   pageSize: number;
   onPageChange: (page: number) => void;
-  onDataChange?: () => void;
+  onDelete?: (row: T) => void;
 };
 
-export function ApplicationsTable({
-  applications,
+export function DataTable<T>({
+  items,
+  columns,
   pageCount,
   pageIndex,
   pageSize,
   onPageChange,
-  onDataChange,
-}: ApplicationsTableProps) {
-  const [applicationToDelete, setApplicationToDelete] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  const handleDeleteClick = (id: string) => {
-    setApplicationToDelete(id);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!applicationToDelete) return;
-
-    const id = applicationToDelete;
-
-    try {
-      setIsDeleting(true);
-
-      const result = await deleteApplication(id);
-
-      if (result.success) {
-        toast.success("Application deleted successfully");
-        setApplicationToDelete(null);
-        onDataChange?.();
-      } else {
-        toast.error(result.error || "Failed to delete application");
-      }
-    } catch (error) {
-      console.error(error);
-      toast.error("Failed to delete application");
-    } finally {
-      setIsDeleting(false);
-    }
-  };
-
+  onDelete,
+}: DataTableProps<T>) {
   const table = useReactTable({
-    data: applications,
+    data: items,
     columns,
     pageCount,
     state: {
@@ -84,16 +41,16 @@ export function ApplicationsTable({
       },
     },
     onPaginationChange: (updater) => {
-      if (typeof updater === "function") {
-        const newState = updater({ pageIndex, pageSize });
-        onPageChange(newState.pageIndex);
-      }
+      const next =
+        typeof updater === "function"
+          ? updater({ pageIndex, pageSize })
+          : updater;
+
+      onPageChange(next.pageIndex);
     },
     getCoreRowModel: getCoreRowModel(),
     manualPagination: true,
-    meta: {
-      onDelete: handleDeleteClick,
-    },
+    meta: { onDelete },
   });
 
   return (
@@ -136,7 +93,7 @@ export function ApplicationsTable({
                 <TableRow>
                   <TableCell colSpan={columns.length} className="h-24 text-center">
                     <div className="text-muted-foreground">
-                      No applications found.
+                      No items found.
                     </div>
                   </TableCell>
                 </TableRow>
@@ -174,36 +131,6 @@ export function ApplicationsTable({
           </div>
         </div>
       </div>
-
-      <AlertDialog
-        open={applicationToDelete !== null}
-        onOpenChange={(open) => {
-          if (!open && !isDeleting) {
-            setApplicationToDelete(null);
-          }
-        }}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete Application</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this application? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={(e) => {
-                e.preventDefault();
-                void handleDeleteConfirm();
-              }}
-              disabled={isDeleting}
-            >
-              {isDeleting ? "Deleting..." : "Delete"}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </>
   );
 }

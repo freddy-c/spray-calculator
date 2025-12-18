@@ -101,7 +101,7 @@ export function LiveCalculationsCard({ metrics, sprayVolumeLHa, isSubmitting, on
           <div className="rounded-md border p-3">
             <Tooltip>
               <TooltipTrigger>
-                <p className="text-sm text-muted-foreground">Tanks required</p>
+                <p className="text-sm text-muted-foreground text-left">Tanks</p>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Number of full tanks to cover the total area.</p>

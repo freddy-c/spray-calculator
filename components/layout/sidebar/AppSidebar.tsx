@@ -1,6 +1,6 @@
 "use client"
 
-import { IconClipboardList, IconDashboard, IconGolf } from "@tabler/icons-react"
+import { IconClipboardList, IconDashboard, IconGolf, IconMap } from "@tabler/icons-react"
 
 import { Sidebar, SidebarContent, SidebarFooter, SidebarHeader, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { NavMain } from "./NavMain"
@@ -10,14 +10,14 @@ import { redirect } from "next/navigation";
 const data = {
     navMain: [
         {
-            title: "Dashboard",
-            url: "/dashboard",
-            icon: IconDashboard,
+            title: "Applications",
+            url: "/dashboard/",
+            icon: IconClipboardList,
         },
         {
-            title: "Applications",
-            url: "/applications",
-            icon: IconClipboardList,
+            title: "Areas",
+            url: "/dashboard/areas",
+            icon: IconMap,
         }
     ]
 }

@@ -73,7 +73,7 @@ export const columns: ColumnDef<ApplicationListItem>[] = [
     accessorKey: "totalAreaHa",
     header: () => <div>Total Area (ha)</div>,
     cell: ({ row }) => {
-      return <div>{row.getValue("totalAreaHa")}</div>;
+      return <div>{row.getValue<number>("totalAreaHa").toFixed(3)}</div>;
     },
   },
   {

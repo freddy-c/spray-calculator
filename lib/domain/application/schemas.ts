@@ -1,17 +1,11 @@
 import { z } from "zod";
-import { areaTypeOptions, type AreaType } from "./types";
 import { applicationProductFieldSchema } from "@/lib/domain/product/schemas";
 
 /**
- * Schema for validating area data
+ * Schema for application area reference
  */
-export const areaSchema = z.object({
-  label: z.string().min(1, "Label is required"),
-  type: z.enum(areaTypeOptions.map((a) => a.value) as [AreaType, ...AreaType[]]),
-  sizeHa: z.coerce
-    .number()
-    .positive("Area size must be greater than 0")
-    .max(1000, "Area size seems too large"),
+export const applicationAreaRefSchema = z.object({
+  areaId: z.string().min(1, "Select an area"),
 });
 
 /**
@@ -35,8 +29,15 @@ export const createApplicationSchema = z.object({
     .gte(3, "Min 3 km/h")
     .lte(12, "Max 12 km/h"),
   areas: z
-    .array(areaSchema)
-    .min(1, "Add at least one area for this application"),
+    .array(applicationAreaRefSchema)
+    .min(1, "Add at least one area for this application")
+    .refine(
+      (areas) => {
+        const areaIds = areas.map((a) => a.areaId);
+        return new Set(areaIds).size === areaIds.length;
+      },
+      { message: "Duplicate areas are not allowed" }
+    ),
   products: z.array(applicationProductFieldSchema),
 });
 
@@ -61,8 +62,7 @@ export const completeApplicationSchema = z.object({
  * Inferred types from schemas - exported for convenience
  * Using z.input for form inputs (before coercion) and z.output for API/logic (after coercion)
  */
-export type AreaInput = z.input<typeof areaSchema>;
-export type AreaOutput = z.output<typeof areaSchema>;
+export type ApplicationAreaRef = z.infer<typeof applicationAreaRefSchema>;
 export type CreateApplicationInput = z.input<typeof createApplicationSchema>;
 export type CreateApplicationOutput = z.output<typeof createApplicationSchema>;
 export type ScheduleApplicationInput = z.input<typeof scheduleApplicationSchema>;

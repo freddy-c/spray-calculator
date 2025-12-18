@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { calculateSprayMetrics, createApplicationSchema, type CreateApplicationInput, type CreateApplicationOutput, type SprayMetrics } from "@/lib/domain/application";
+import { calculateSprayMetrics, createApplicationSchema, type CreateApplicationOutput, type SprayMetrics } from "@/lib/domain/application";
 import { createApplication, updateApplication } from "@/lib/domain/application/actions";
 import { toast } from "sonner";
 import { useRouter, usePathname } from "next/navigation";
+import type { AreaListItem } from "@/lib/domain/area";
 
 
 
@@ -13,6 +14,7 @@ type UseApplicationFormProps = {
   initialValues?: Partial<CreateApplicationOutput>;
   applicationId?: string;
   onSuccess?: () => void;
+  availableAreas: AreaListItem[];
 };
 
 const defaultFormValues: CreateApplicationOutput = {
@@ -23,18 +25,12 @@ const defaultFormValues: CreateApplicationOutput = {
   nozzleCount: 40,
   tankSizeL: 400,
   speedKmH: 5,
-  areas: [
-    {
-      label: "Greens",
-      type: "green",
-      sizeHa: 1,
-    },
-  ],
+  areas: [],
   products: [],
 };
 
 export function useApplicationForm(props?: UseApplicationFormProps) {
-  const { initialValues, mode = "create", applicationId, onSuccess } = props || {};
+  const { initialValues, mode = "create", applicationId, onSuccess, availableAreas = [] } = props || {};
 
   const router = useRouter();
   const pathname = usePathname();
@@ -76,8 +72,23 @@ export function useApplicationForm(props?: UseApplicationFormProps) {
   const metrics: SprayMetrics | null = useMemo(() => {
     const parsed = createApplicationSchema.safeParse(watchedValues);
     if (!parsed.success) return null;
-    return calculateSprayMetrics(parsed.data);
-  }, [watchedValues]);
+
+    // Transform form data to ApplicationDetail format with full area data
+    const dataWithAreas = {
+      ...parsed.data,
+      areas: parsed.data.areas.map((area) => {
+        const fullArea = availableAreas.find((a) => a.id === area.areaId);
+        return {
+          id: area.areaId,
+          name: fullArea?.name ?? '',
+          type: fullArea?.type ?? '',
+          sizeHa: fullArea?.sizeHa ?? 0,
+        };
+      }),
+    };
+
+    return calculateSprayMetrics(dataWithAreas as any);
+  }, [watchedValues, availableAreas]);
 
   async function handleCreate(data: CreateApplicationOutput) {
     const result = await createApplication(data);

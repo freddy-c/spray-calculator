@@ -9,7 +9,6 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { ApplicationsTable } from "./applications-table";
 import type { ApplicationListItem, ApplicationStatus } from "@/lib/domain/application/types";
 import { getApplications } from "@/lib/domain/application/actions";
-import { DASHBOARD_CONFIG } from "./config";
 
 type DashboardContentProps = {
   initialApplications: ApplicationListItem[];
