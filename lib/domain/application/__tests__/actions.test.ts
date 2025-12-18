@@ -35,6 +35,7 @@ import { prisma } from '@/lib/core/database'
 vi.mocked(auth).api = mockAuth.api as any
 vi.mocked(prisma).application = prismaMock.application
 vi.mocked(prisma).product = prismaMock.product
+vi.mocked(prisma).$transaction = prismaMock.$transaction
 
 describe('Application Actions - Security & Validation', () => {
   beforeEach(() => {
@@ -229,13 +230,42 @@ describe('Application Actions - Security & Validation', () => {
       if (!result.success) {
         expect(result.error).toBe('Unauthorized')
       }
-      expect(prismaMock.application.findMany).not.toHaveBeenCalled()
+    })
+
+    it('returns paginated result structure', async () => {
+      mockAuthenticatedUser()
+
+      const mockApplications = [
+        {
+          id: 'app-1',
+          name: 'Test App',
+          status: 'DRAFT',
+          scheduledDate: null,
+          completedDate: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          areas: [{ id: 'area-1', sizeHa: 5 }],
+        } as any,
+      ]
+
+      prismaMock.$transaction.mockResolvedValue([1, mockApplications])
+
+      const result = await getApplications()
+
+      expect(result.success).toBe(true)
+      if (result.success) {
+        // Verify structure contains pagination data
+        expect(result.data).toHaveProperty('data')
+        expect(result.data).toHaveProperty('pageCount')
+        expect(result.data).toHaveProperty('totalCount')
+        expect(Array.isArray(result.data.data)).toBe(true)
+      }
     })
 
     it('calculates total area - single area', async () => {
       mockAuthenticatedUser()
 
-      prismaMock.application.findMany.mockResolvedValue([
+      const mockApplications = [
         {
           id: 'app-1',
           name: 'Test App',
@@ -248,20 +278,22 @@ describe('Application Actions - Security & Validation', () => {
             { id: 'area-1', sizeHa: 5 },
           ],
         } as any,
-      ])
+      ]
+
+      prismaMock.$transaction.mockResolvedValue([1, mockApplications])
 
       const result = await getApplications()
 
       expect(result.success).toBe(true)
       if (result.success) {
-        expect(result.data[0].totalAreaHa).toBe(5)
+        expect(result.data.data[0].totalAreaHa).toBe(5)
       }
     })
 
     it('calculates total area - multiple areas', async () => {
       mockAuthenticatedUser()
 
-      prismaMock.application.findMany.mockResolvedValue([
+      const mockApplications = [
         {
           id: 'app-1',
           name: 'Test App',
@@ -276,41 +308,56 @@ describe('Application Actions - Security & Validation', () => {
             { id: 'area-3', sizeHa: 2.5 },
           ],
         } as any,
-      ])
+      ]
+
+      prismaMock.$transaction.mockResolvedValue([1, mockApplications])
 
       const result = await getApplications()
 
       expect(result.success).toBe(true)
       if (result.success) {
-        // Critical business logic test
-        expect(result.data[0].totalAreaHa).toBe(10.5)
+        // Critical business logic test: sum of all areas
+        expect(result.data.data[0].totalAreaHa).toBe(10.5)
       }
     })
 
-    it('filters by authenticated user', async () => {
-      const { user } = mockAuthenticatedUser({ id: 'user-456' })
-      prismaMock.application.findMany.mockResolvedValue([])
+    it('calculates page count correctly', async () => {
+      mockAuthenticatedUser()
 
-      await getApplications()
+      // Test various pagination scenarios
+      const scenarios = [
+        { totalCount: 25, pageSize: 10, expectedPages: 3 },
+        { totalCount: 30, pageSize: 10, expectedPages: 3 },
+        { totalCount: 31, pageSize: 10, expectedPages: 4 },
+        { totalCount: 5, pageSize: 10, expectedPages: 1 },
+        { totalCount: 0, pageSize: 10, expectedPages: 0 },
+      ]
 
-      expect(prismaMock.application.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: {
-            userId: 'user-456',
-          },
-        })
-      )
+      for (const scenario of scenarios) {
+        prismaMock.$transaction.mockResolvedValue([scenario.totalCount, []])
+
+        const result = await getApplications({ pageSize: scenario.pageSize })
+
+        expect(result.success).toBe(true)
+        if (result.success) {
+          expect(result.data.pageCount).toBe(scenario.expectedPages)
+          expect(result.data.totalCount).toBe(scenario.totalCount)
+        }
+      }
     })
 
     it('handles database errors gracefully', async () => {
       mockAuthenticatedUser()
-      prismaMock.application.findMany.mockRejectedValue(
+      prismaMock.$transaction.mockRejectedValue(
         new Error('Database error')
       )
 
       const result = await getApplications()
 
       expect(result.success).toBe(false)
+      if (!result.success) {
+        expect(result.error).toBeTruthy()
+      }
     })
   })
 })

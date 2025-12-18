@@ -12,10 +12,9 @@ import type {
   ApplicationListItem,
   ApplicationWithAreas,
   ApplicationDetail,
-  AreaType,
 } from "@/lib/domain/application/types";
 import { ApplicationStatus } from "@/lib/domain/application/types";
-import type { ApplicationProductField, ProductType } from "@/lib/domain/product/types";
+import type { ProductType } from "@/lib/domain/product/types";
 import { isCuid } from "@paralleldrive/cuid2";
 import type { ActionResult } from "@/lib/shared/types";
 
@@ -82,6 +81,50 @@ async function validateProductIds(
 }
 
 /**
+ * Validate that all area IDs exist and belong to the user
+ */
+async function validateAreaIds(
+  areaIds: string[],
+  userId: string
+): Promise<{ valid: boolean; error?: string }> {
+  if (areaIds.length === 0) {
+    return { valid: true };
+  }
+
+  // Check all area IDs are valid CUIDs
+  const invalidIds = areaIds.filter(id => !isCuid(id));
+  if (invalidIds.length > 0) {
+    return {
+      valid: false,
+      error: `Invalid area ID format: ${invalidIds.join(', ')}`
+    };
+  }
+
+  // Verify all areas exist and belong to user
+  const areas = await prisma.area.findMany({
+    where: {
+      id: { in: areaIds },
+      userId: userId,
+    },
+    select: {
+      id: true,
+    },
+  });
+
+  const foundIds = new Set(areas.map(a => a.id));
+  const missingIds = areaIds.filter(id => !foundIds.has(id));
+
+  if (missingIds.length > 0) {
+    return {
+      valid: false,
+      error: `Areas not found or not accessible: ${missingIds.join(', ')}`
+    };
+  }
+
+  return { valid: true };
+}
+
+/**
  * Create a new application
  */
 export async function createApplication(
@@ -105,6 +148,13 @@ export async function createApplication(
 
     const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, nozzleCount, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
+    // Validate all area IDs exist and belong to user
+    const areaIds = areas.map(a => a.areaId);
+    const areaValidation = await validateAreaIds(areaIds, session.user.id);
+    if (!areaValidation.valid) {
+      return { success: false, error: areaValidation.error || "Invalid areas" };
+    }
+
     // Validate all product IDs exist and are accessible
     const productIds = products.map(p => p.productId);
     const productValidation = await validateProductIds(productIds, session.user.id);
@@ -125,9 +175,7 @@ export async function createApplication(
         speedKmH,
         areas: {
           create: areas.map((area, index) => ({
-            label: area.label,
-            type: area.type,
-            sizeHa: area.sizeHa,
+            areaId: area.areaId,
             order: index,
           })),
         },
@@ -152,26 +200,54 @@ export async function createApplication(
 }
 
 /**
- * Get all applications for the current user
+ * Get all applications for the current user (with pagination and filtering)
  */
-export async function getApplications(): Promise<ActionResult<ApplicationListItem[]>> {
+export async function getApplications(params?: {
+  page?: number;
+  pageSize?: number;
+  status?: ApplicationStatus | "all";
+}): Promise<ActionResult<{
+  data: ApplicationListItem[];
+  pageCount: number;
+  totalCount: number;
+}>> {
   try {
     const session = await getSession();
     if (!session) {
       return { success: false, error: "Unauthorized" };
     }
 
-    const applications = await prisma.application.findMany({
-      where: {
-        userId: session.user.id,
-      },
-      include: {
-        areas: true,
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+    const page = params?.page ?? 0;
+    const pageSize = params?.pageSize ?? 10;
+    const status = params?.status ?? "all";
+
+    // Build where clause
+    const where = {
+      userId: session.user.id,
+      ...(status !== "all" && { status }),
+    };
+
+    // Execute count and findMany in a transaction for consistency
+    const [totalCount, applications] = await prisma.$transaction([
+      prisma.application.count({ where }),
+      prisma.application.findMany({
+        where,
+        include: {
+          areas: {
+            include: {
+              area: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: "desc",
+        },
+        skip: page * pageSize,
+        take: pageSize,
+      }),
+    ]);
+
+    const pageCount = Math.ceil(totalCount / pageSize);
 
     // Calculate total area for each application and format dates
     const applicationsWithTotalArea = applications.map((app) => ({
@@ -182,7 +258,7 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
       completedDate: app.completedDate,
       createdAt: app.createdAt,
       updatedAt: app.updatedAt,
-      totalAreaHa: app.areas.reduce((sum, area) => sum + area.sizeHa, 0),
+      totalAreaHa: app.areas.reduce((sum, appArea) => sum + appArea.area.sizeHa, 0),
       formattedUpdatedAt: new Intl.DateTimeFormat("en-US", {
         year: "numeric",
         month: "short",
@@ -193,7 +269,14 @@ export async function getApplications(): Promise<ActionResult<ApplicationListIte
       }).format(app.updatedAt),
     }));
 
-    return { success: true, data: applicationsWithTotalArea };
+    return {
+      success: true,
+      data: {
+        data: applicationsWithTotalArea,
+        pageCount,
+        totalCount,
+      }
+    };
   } catch (error) {
     return {
       success: false,
@@ -225,6 +308,9 @@ export async function getApplication(
       },
       include: {
         areas: {
+          include: {
+            area: true,
+          },
           orderBy: {
             order: "asc",
           },
@@ -255,10 +341,11 @@ export async function getApplication(
         nozzleCount: application.nozzleCount,
         tankSizeL: application.tankSizeL,
         speedKmH: application.speedKmH,
-        areas: application.areas.map((area) => ({
-          label: area.label,
-          type: area.type as AreaType,
-          sizeHa: area.sizeHa,
+        areas: application.areas.map((appArea) => ({
+          id: appArea.area.id,
+          name: appArea.area.name,
+          type: appArea.area.type,
+          sizeHa: appArea.area.sizeHa,
         })),
         products: application.applicationProducts.map((ap) => ({
           productId: ap.productId,
@@ -309,6 +396,13 @@ export async function updateApplication(
 
     const { name, nozzleId, sprayVolumeLHa, nozzleSpacingM, nozzleCount, tankSizeL, speedKmH, areas, products } = validationResult.data;
 
+    // Validate all area IDs exist and belong to user
+    const areaIds = areas.map(a => a.areaId);
+    const areaValidation = await validateAreaIds(areaIds, session.user.id);
+    if (!areaValidation.valid) {
+      return { success: false, error: areaValidation.error || "Invalid areas" };
+    }
+
     // Validate all product IDs exist and are accessible
     const productIds = products.map(p => p.productId);
     const productValidation = await validateProductIds(productIds, session.user.id);
@@ -345,9 +439,7 @@ export async function updateApplication(
           speedKmH,
           areas: {
             create: areas.map((area, index) => ({
-              label: area.label,
-              type: area.type,
-              sizeHa: area.sizeHa,
+              areaId: area.areaId,
               order: index,
             })),
           },
@@ -363,7 +455,7 @@ export async function updateApplication(
     ]);
 
     revalidatePath("/dashboard");
-    revalidatePath(`/applications/${id}/edit`);
+    revalidatePath(`/dashboard/applications/${id}/edit`);
     return { success: true, data: { id } };
   } catch (error) {
     return {
@@ -452,8 +544,8 @@ export async function scheduleApplication(
     });
 
     revalidatePath("/dashboard");
-    revalidatePath(`/applications/${id}/edit`);
-    revalidatePath(`/applications/${id}`);
+    revalidatePath(`/dashboard/applications/${id}/edit`);
+    revalidatePath(`/dashboard/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
     return {
@@ -499,8 +591,8 @@ export async function completeApplication(
     });
 
     revalidatePath("/dashboard");
-    revalidatePath(`/applications/${id}/edit`);
-    revalidatePath(`/applications/${id}`);
+    revalidatePath(`/dashboard/applications/${id}/edit`);
+    revalidatePath(`/dashboard/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
     return {
@@ -547,8 +639,8 @@ export async function revertToDraft(
     });
 
     revalidatePath("/dashboard");
-    revalidatePath(`/applications/${id}/edit`);
-    revalidatePath(`/applications/${id}`);
+    revalidatePath(`/dashboard/applications/${id}/edit`);
+    revalidatePath(`/dashboard/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
     return {
@@ -597,8 +689,8 @@ export async function revertToScheduled(
     });
 
     revalidatePath("/dashboard");
-    revalidatePath(`/applications/${id}/edit`);
-    revalidatePath(`/applications/${id}`);
+    revalidatePath(`/dashboard/applications/${id}/edit`);
+    revalidatePath(`/dashboard/applications/${id}`);
     return { success: true, data: undefined };
   } catch (error) {
     return {
@@ -631,6 +723,9 @@ export async function getApplicationDetail(
       },
       include: {
         areas: {
+          include: {
+            area: true,
+          },
           orderBy: {
             order: "asc",
           },
@@ -669,10 +764,11 @@ export async function getApplicationDetail(
         notes: application.notes,
         createdAt: application.createdAt,
         updatedAt: application.updatedAt,
-        areas: application.areas.map((area) => ({
-          label: area.label,
-          type: area.type as AreaType,
-          sizeHa: area.sizeHa,
+        areas: application.areas.map((appArea) => ({
+          id: appArea.area.id,
+          name: appArea.area.name,
+          type: appArea.area.type,
+          sizeHa: appArea.area.sizeHa,
         })),
         products: application.applicationProducts.map((ap) => ({
           productId: ap.productId,

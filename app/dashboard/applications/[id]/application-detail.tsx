@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,59 +14,21 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ApplicationStatus } from "@/lib/domain/application/types";
-import type { ApplicationProductField } from "@/lib/domain/product/types";
+import type { ApplicationDetail } from "@/lib/domain/application/types";
 import { calculateSprayMetrics } from "@/lib/domain/application/calculations";
 import { nozzleCatalog } from "@/lib/data/nozzle-catalog";
-import { areaTypeOptions } from "@/lib/domain/application/types";
+import { areaTypeOptions } from "@/lib/domain/area/types";
 import { StatusDropdown } from "./status-dropdown";
 import { DeleteApplicationDialog } from "./delete-dialog";
 
 type ApplicationDetailProps = {
-  application: {
-    id: string;
-    name: string;
-    status: ApplicationStatus;
-    nozzleId: string;
-    sprayVolumeLHa: number;
-    nozzleSpacingM: number;
-    nozzleCount: number;
-    tankSizeL: number;
-    speedKmH: number;
-    scheduledDate: Date | null;
-    completedDate: Date | null;
-    operator: string | null;
-    weatherConditions: string | null;
-    notes: string | null;
-    createdAt: Date;
-    updatedAt: Date;
-    areas: Array<{
-      label: string;
-      type: string;
-      sizeHa: number;
-    }>;
-    products: ApplicationProductField[];
-  };
+  application: ApplicationDetail;
 };
 
 export function ApplicationDetail({ application }: ApplicationDetailProps) {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const router = useRouter();
 
-  const metrics = calculateSprayMetrics({
-    name: application.name,
-    nozzleId: application.nozzleId,
-    sprayVolumeLHa: application.sprayVolumeLHa,
-    nozzleSpacingM: application.nozzleSpacingM,
-    nozzleCount: application.nozzleCount,
-    tankSizeL: application.tankSizeL,
-    speedKmH: application.speedKmH,
-    areas: application.areas.map(a => ({
-      label: a.label,
-      type: a.type as any,
-      sizeHa: a.sizeHa,
-    })),
-    products: application.products,
-  });
+  const metrics = calculateSprayMetrics(application);
 
   const nozzle = nozzleCatalog[application.nozzleId];
 
@@ -115,33 +76,33 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
 
       {/* Completion Details */}
       {application.status === ApplicationStatus.COMPLETED &&
-       (application.operator || application.weatherConditions || application.notes) && (
-        <Card>
-          <CardHeader className="border-b">
-            <CardTitle>Completion Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {application.operator && (
-              <div>
-                <div className="text-sm text-muted-foreground">Operator</div>
-                <div className="font-medium">{application.operator}</div>
-              </div>
-            )}
-            {application.weatherConditions && (
-              <div>
-                <div className="text-sm text-muted-foreground">Weather Conditions</div>
-                <div className="font-medium">{application.weatherConditions}</div>
-              </div>
-            )}
-            {application.notes && (
-              <div>
-                <div className="text-sm text-muted-foreground">Notes</div>
-                <p className="text-sm whitespace-pre-wrap">{application.notes}</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
+        (application.operator || application.weatherConditions || application.notes) && (
+          <Card>
+            <CardHeader className="border-b">
+              <CardTitle>Completion Details</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {application.operator && (
+                <div>
+                  <div className="text-sm text-muted-foreground">Operator</div>
+                  <div className="font-medium">{application.operator}</div>
+                </div>
+              )}
+              {application.weatherConditions && (
+                <div>
+                  <div className="text-sm text-muted-foreground">Weather Conditions</div>
+                  <div className="font-medium">{application.weatherConditions}</div>
+                </div>
+              )}
+              {application.notes && (
+                <div>
+                  <div className="text-sm text-muted-foreground">Notes</div>
+                  <p className="text-sm whitespace-pre-wrap">{application.notes}</p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
 
       {/* Main Application Details - Two Column Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
@@ -152,7 +113,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
             <CardHeader className="border-b">
               <CardTitle>Areas</CardTitle>
               <CardDescription>
-                {metrics.totalAreaHa} ha total
+                {metrics.totalAreaHa.toFixed(3)} ha total
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -167,7 +128,7 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <TableBody>
                   {application.areas.map((area, index) => (
                     <TableRow key={index}>
-                      <TableCell>{area.label}</TableCell>
+                      <TableCell>{area.name}</TableCell>
                       <TableCell className="text-muted-foreground">
                         {areaTypeOptions.find(opt => opt.value === area.type)?.label}
                       </TableCell>
@@ -225,19 +186,19 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle</p>
-                    <p className="text-xl font-semibold">{nozzle.label}</p>
+                    <p className="text-l font-semibold">{nozzle.label}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Spacing</p>
-                    <p className="text-xl font-semibold">{application.nozzleSpacingM} m</p>
+                    <p className="text-l font-semibold">{application.nozzleSpacingM} m</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Count</p>
-                    <p className="text-xl font-semibold">{application.nozzleCount}</p>
+                    <p className="text-l font-semibold">{application.nozzleCount}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Tank Size</p>
-                    <p className="text-xl font-semibold">{application.tankSizeL} L</p>
+                    <p className="text-l font-semibold">{application.tankSizeL} L</p>
                   </div>
                 </div>
               </div>
@@ -248,17 +209,17 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Speed</p>
-                    <p className="text-xl font-semibold">{application.speedKmH} km/h</p>
+                    <p className="text-l font-semibold">{application.speedKmH} km/h</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Pressure</p>
-                    <p className={`text-xl font-semibold ${metrics.pressureStatus === "ok" ? "text-emerald-700" : "text-destructive"}`}>
+                    <p className={`text-l font-semibold ${metrics.pressureStatus === "ok" ? "text-emerald-700" : "text-destructive"}`}>
                       {metrics.requiredPressureBar.toFixed(2)} bar
                     </p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Nozzle Flow</p>
-                    <p className="text-xl font-semibold">{metrics.flowPerNozzleLMin.toFixed(2)} L/min</p>
+                    <p className="text-l font-semibold">{metrics.flowPerNozzleLMin.toFixed(2)} L/min</p>
                   </div>
                 </div>
               </div>
@@ -269,19 +230,19 @@ export function ApplicationDetail({ application }: ApplicationDetailProps) {
                 <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Spray Volume</p>
-                    <p className="text-xl font-semibold">{application.sprayVolumeLHa} L/ha</p>
+                    <p className="text-l font-semibold">{application.sprayVolumeLHa} L/ha</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Total Spray Volume</p>
-                    <p className="text-xl font-semibold">{metrics.totalSprayVolumeL} L</p>
+                    <p className="text-l font-semibold">{metrics.totalSprayVolumeL.toFixed(2)} L</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Tanks Required</p>
-                    <p className="text-xl font-semibold">{metrics.tanksRequired.toFixed(2)}</p>
+                    <p className="text-l font-semibold">{metrics.tanksRequired.toFixed(2)}</p>
                   </div>
                   <div className="rounded-md border p-3">
                     <p className="text-sm text-muted-foreground">Spray Time</p>
-                    <p className="text-xl font-semibold">
+                    <p className="text-l font-semibold">
                       {(() => {
                         const totalMinutes = Math.round(metrics.sprayTimeMinutes);
                         const hours = Math.floor(totalMinutes / 60);

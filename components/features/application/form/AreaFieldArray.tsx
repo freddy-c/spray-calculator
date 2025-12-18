@@ -1,113 +1,102 @@
 "use client";
 
+import { X, Plus } from "lucide-react";
 import { Controller, type Control, type FieldArrayWithId, type FieldErrors } from "react-hook-form";
-import { X } from "lucide-react";
-import { areaTypeOptions, type CreateApplicationInput } from "@/lib/domain/application";
+import type { CreateApplicationInput } from "@/lib/domain/application";
+import type { AreaListItem } from "@/lib/domain/area";
 import { Field, FieldDescription, FieldError, FieldLabel, FieldLegend, FieldSet } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
+import { useMemo } from "react";
+import { Input } from "@/components/ui/input";
 
 type AreaFieldArrayProps = {
   control: Control<CreateApplicationInput>;
   fields: FieldArrayWithId<CreateApplicationInput, "areas", "id">[];
   append: (value: CreateApplicationInput["areas"][number]) => void;
   remove: (index: number) => void;
-  errors: FieldErrors<CreateApplicationInput>;
+  availableAreas: AreaListItem[];
 };
 
-export function AreaFieldArray({ control, fields, append, remove, errors }: AreaFieldArrayProps) {
+const areaTypeLabels: Record<string, string> = {
+  GREEN: "Green",
+  TEE: "Tee",
+  FAIRWAY: "Fairway",
+  ROUGH: "Rough",
+  FIRST_CUT: "First Cut",
+  APRON: "Apron",
+  COLLAR: "Collar",
+  PATH: "Path",
+  OTHER: "Other",
+};
+
+export function AreaFieldArray({
+  control,
+  fields,
+  append,
+  remove,
+  availableAreas,
+}: AreaFieldArrayProps) {
+  const selectedAreaIds = useMemo(
+    () => fields.map((f) => f.areaId),
+    [fields]
+  );
+
+  // Get available areas for a specific field
+  // This includes unselected areas AND the currently selected area for this field
+  const getAvailableAreasForField = (currentValue: string) => {
+    return availableAreas.filter(
+      (area) => !selectedAreaIds.includes(area.id) || area.id === currentValue
+    );
+  };
+
   return (
     <FieldSet>
-      <FieldLegend variant="label">Areas to be sprayed</FieldLegend>
+      <FieldLegend variant="label">Areas</FieldLegend>
       <FieldDescription>
-        Define the areas you will be spraying.
+        Select the areas you will be spraying from your saved areas.
       </FieldDescription>
 
       <div className="space-y-4">
         {fields.map((area, index) => (
-          <div key={area.id} className="space-y-3 p-4 border rounded-md">
-            {/* Label */}
+          <div key={area.id} className="space-y-4">
             <Controller
-              name={`areas.${index}.label`}
+              name={`areas.${index}.areaId`}
               control={control}
-              render={({ field: controllerField, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`input-areas-${index}-label`}>
-                    Label
-                  </FieldLabel>
-                  <Input
-                    {...controllerField}
-                    id={`input-areas-${index}-label`}
-                    placeholder="Greens"
-                    aria-invalid={fieldState.invalid}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
+              render={({ field: controllerField, fieldState }) => {
+                const availableAreasForField = getAvailableAreasForField(controllerField.value ?? "");
+
+                return (
+                  <FieldSet data-invalid={fieldState.invalid}>
+                    <Field data-invalid={fieldState.invalid}>
+                      <Select
+                        value={controllerField.value ?? ""}
+                        onValueChange={(val) => controllerField.onChange(val)}
+                      >
+                        <SelectTrigger id={`input-areas-${index}-areaId`} aria-invalid={fieldState.invalid}>
+                          <SelectValue placeholder="Select an area" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectGroup>
+                            {availableAreasForField.map((area) => (
+                              <SelectItem key={area.id} value={area.id}>
+                                {area.name} ({areaTypeLabels[area.type]}, {area.sizeHa.toFixed(2)} ha)
+                              </SelectItem>
+                            ))}
+                          </SelectGroup>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+                    {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
+                  </FieldSet>
+                );
+              }}
             />
 
-            {/* Type */}
-            <Controller
-              name={`areas.${index}.type`}
-              control={control}
-              render={({ field: controllerField, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`input-areas-${index}-type`}>
-                    Type
-                  </FieldLabel>
-                  <Select
-                    value={controllerField.value}
-                    onValueChange={controllerField.onChange}
-                  >
-                    <SelectTrigger id={`input-areas-${index}-type`}>
-                      <SelectValue placeholder="Select" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {areaTypeOptions.map((opt) => (
-                          <SelectItem key={opt.value} value={opt.value}>
-                            {opt.label}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            {/* Size */}
-            <Controller
-              name={`areas.${index}.sizeHa`}
-              control={control}
-              render={({ field: controllerField, fieldState }) => (
-                <Field data-invalid={fieldState.invalid}>
-                  <FieldLabel htmlFor={`input-areas-${index}-sizeHa`}>
-                    Size (ha)
-                  </FieldLabel>
-                  <Input
-                    {...controllerField}
-                    type="number"
-                    inputMode="decimal"
-                    step={0.01}
-                    id={`input-areas-${index}-sizeHa`}
-                    placeholder="0.5"
-                    aria-invalid={fieldState.invalid}
-                    value={(controllerField.value ?? "") as string | number}
-                  />
-                  {fieldState.invalid && <FieldError errors={[fieldState.error]} />}
-                </Field>
-              )}
-            />
-
-            {/* Remove button */}
             <Button
               type="button"
               variant="outline"
               size="sm"
-              disabled={fields.length === 1}
               onClick={() => remove(index)}
               className="w-full"
             >
@@ -120,20 +109,11 @@ export function AreaFieldArray({ control, fields, append, remove, errors }: Area
         <Button
           type="button"
           variant="outline"
-          onClick={() => append({
-            label: "",
-            type: "other",
-            sizeHa: 0.5,
-          })}
+          onClick={() => append({ areaId: "" })}
         >
           Add Area
         </Button>
       </div>
-
-      {/* Overall areas error (min 1) */}
-      {errors.areas?.root && (
-        <FieldError errors={[errors.areas.root]} />
-      )}
     </FieldSet>
   );
 }
